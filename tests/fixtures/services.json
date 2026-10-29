@@ -1,0 +1,9 @@
+{
+  "title": "Test Home",
+  "lang": "en",
+  "services": [
+    { "name": "Jellyfin", "device": "nas", "port": 8096, "tags": ["media"] },
+    { "name": "Secure", "device": "nas", "scheme": "https", "path": "/x/" }
+  ],
+  "bookmarks": [{ "name": "Docs", "url": "https://example.com", "group": "Tools" }]
+}

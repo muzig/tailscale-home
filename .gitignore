@@ -1,5 +1,5 @@
 public/data.json
-services.json
+/services.json
 var/
 .env
 __pycache__/
