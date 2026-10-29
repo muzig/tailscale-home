@@ -5,10 +5,16 @@
 [Tailscale](https://tailscale.com) 内网主页：一屏 Metro 风格磁贴列出 tailnet 里的所有设备和自建服务。**同时也是一套免费、私有的开发闭环**：在手机上让 Claude 改代码，再用同一部手机刷新浏览器，立刻看到效果。
 
 <p align="center">
-  <img src="docs/screenshots/desktop.png" alt="桌面端" width="68%">
-  &nbsp;
-  <img src="docs/screenshots/mobile.png" alt="手机端" width="24%">
+  <img src="docs/screenshots/desktop.png" alt="桌面端" width="100%">
 </p>
+<p align="center">
+  <img src="docs/screenshots/mobile.png" alt="手机：开始屏幕" width="31%">
+  &nbsp;
+  <img src="docs/screenshots/mobile-device.png" alt="手机：设备详情" width="31%">
+  &nbsp;
+  <img src="docs/screenshots/mobile-apps.png" alt="手机：全部服务列表" width="31%">
+</p>
+<p align="center"><sub>桌面端 · 手机端：开始屏幕、设备详情、全部服务列表</sub></p>
 
 <sub>截图使用 <code>demo/data.json</code> 中的虚构数据。</sub>
 
