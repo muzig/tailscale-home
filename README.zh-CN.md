@@ -1,6 +1,8 @@
 # Tailnet Home
 
-[English](README.md) · [简体中文](README.zh-CN.md)
+[![CI](https://github.com/muzig/tailscale-home/actions/workflows/ci.yml/badge.svg)](https://github.com/muzig/tailscale-home/actions/workflows/ci.yml) [![Release](https://img.shields.io/github/v/release/muzig/tailscale-home)](https://github.com/muzig/tailscale-home/releases) [![License: MIT](https://img.shields.io/badge/license-MIT-blue)](LICENSE)
+
+[English](README.md) · [简体中文](README.zh-CN.md) · **[在线演示](https://muzig.github.io/tailscale-home/)**（建议用手机打开）
 
 [Tailscale](https://tailscale.com) 内网主页：一屏 Metro 风格磁贴列出 tailnet 里的所有设备和自建服务。**同时也是一套免费、私有的开发闭环**：在手机上让 Claude 改代码，再用同一部手机刷新浏览器，立刻看到效果。
 
@@ -41,7 +43,7 @@
 
 ## 快速开始
 
-不装 Tailscale 也能先看界面：
+只想看看？打开 **[在线演示](https://muzig.github.io/tailscale-home/)**（虚构数据）。在本地运行、不装 Tailscale 也行：
 
 ```bash
 git clone https://github.com/muzig/tailscale-home.git && cd tailscale-home
@@ -82,6 +84,7 @@ python3 -m http.server -d public 8000
 git clone https://github.com/muzig/tailscale-home.git ~/tailscale-home && cd ~/tailscale-home
 mkdir -p var && cp services.example.json var/services.json      # 按需编辑
 docker compose up -d --build                                    # 在 127.0.0.1:4183 提供 var/data.json
+# 或者不构建，直接用发布的镜像：docker run -d --restart unless-stopped -p 127.0.0.1:4183:80 -v "$PWD/var:/data:ro" ghcr.io/muzig/tailscale-home
 
 mkdir -p ~/.config/systemd/user
 for f in deploy/tailscale-home-scan.{service,timer}; do

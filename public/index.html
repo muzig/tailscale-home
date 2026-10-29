@@ -6,10 +6,14 @@
 <meta name="color-scheme" content="dark light">
 <title>Tailnet Home</title>
 <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24'><rect x='1' y='1' width='10' height='10' fill='%230050ef'/><rect x='13' y='1' width='10' height='10' fill='%23008a00'/><rect x='1' y='13' width='10' height='10' fill='%23d80073'/><rect x='13' y='13' width='10' height='10' fill='%23c25100'/></svg>">
-<link rel="preconnect" href="https://fonts.googleapis.com">
-<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link href="https://fonts.googleapis.com/css2?family=Noto+Sans:wght@300;400;600&display=swap" rel="stylesheet">
 <style>
+  /* 字体随页面自带（OFL，见 fonts/OFL.txt），不向外部请求 */
+  @font-face { font-family: "Noto Sans"; font-weight: 300; font-display: swap; src: url(fonts/noto-sans-300.woff2) format("woff2");
+               unicode-range: U+0000-00FF, U+0131, U+0152-0153, U+02BB-02BC, U+02C6, U+02DA, U+02DC, U+0304, U+0308, U+0329, U+2000-206F, U+20AC, U+2122, U+2191, U+2193, U+2212, U+2215, U+FEFF, U+FFFD; }
+  @font-face { font-family: "Noto Sans"; font-weight: 400; font-display: swap; src: url(fonts/noto-sans-400.woff2) format("woff2");
+               unicode-range: U+0000-00FF, U+0131, U+0152-0153, U+02BB-02BC, U+02C6, U+02DA, U+02DC, U+0304, U+0308, U+0329, U+2000-206F, U+20AC, U+2122, U+2191, U+2193, U+2212, U+2215, U+FEFF, U+FFFD; }
+  @font-face { font-family: "Noto Sans"; font-weight: 600; font-display: swap; src: url(fonts/noto-sans-600.woff2) format("woff2");
+               unicode-range: U+0000-00FF, U+0131, U+0152-0153, U+02BB-02BC, U+02C6, U+02DA, U+02DC, U+0304, U+0308, U+0329, U+2000-206F, U+20AC, U+2122, U+2191, U+2193, U+2212, U+2215, U+FEFF, U+FFFD; }
   :root {
     /* Metro 强调色：均取白字 ≥4.5:1 的色值 */
     --cobalt: #0050ef; --emerald: #008a00; --crimson: #a20025; --teal: #00827f;
@@ -197,7 +201,7 @@ const I18N = {
     noSvc: '<strong>No services on this device</strong>Add some in services.json; they show up after the next scan.',
     copied: v => `Copied ${v}`, sep: ', ',
     loadFail: '<strong>Can’t load the service list</strong>data.json failed to load: the scan may not have run yet, or the network is down.',
-    retry: 'Reload',
+    retry: 'Reload', demo: 'Demo · fake tailnet',
     allApps: 'All services',
     keys: '<kbd>↑ ↓</kbd> select　<kbd>↵</kbd> open　<kbd>⌘↵</kbd> new tab　<kbd>Esc</kbd> show all　·　rescanned every 10 min',
   },
@@ -211,7 +215,7 @@ const I18N = {
     noSvc: '<strong>这台设备上没有服务</strong>在 services.json 里为它添加，下次扫描后出现在这里。',
     copied: v => `已复制 ${v}`, sep: '，',
     loadFail: '<strong>暂时读不到服务列表</strong>data.json 加载失败：可能是扫描任务还没跑过，或网络中断。',
-    retry: '重新加载',
+    retry: '重新加载', demo: '演示 · 虚构数据',
     allApps: '全部服务',
     keys: '<kbd>↑ ↓</kbd> 选择　<kbd>↵</kbd> 打开　<kbd>⌘↵</kbd> 新标签　<kbd>Esc</kbd> 返回全部　·　每 10 分钟自动扫描',
   },
@@ -364,10 +368,10 @@ function overviewTile() {
     </section>`;
   }
   const online = devices.filter(x => x.online).length;
-  const stale = Date.now() - new Date(generated) > 30 * 60000;   // 扫描每 10 分钟一次，超过 30 分钟说明扫描停了
+  const stale = !state.data.demo && Date.now() - new Date(generated) > 30 * 60000;   // 扫描每 10 分钟一次，超过 30 分钟说明扫描停了
   return `<section class="tile w ov" aria-label="${T.overview}">
     <div class="num">${online}<small>${T.onlineOf(devices.length)}</small></div>
-    <div class="sub">${stale ? `<span class="stale">${T.stale(ago(generated))}</span>` : T.scanned(ago(generated) || T.justNow)}</div>
+    <div class="sub">${state.data.demo ? T.demo : stale ? `<span class="stale">${T.stale(ago(generated))}</span>` : T.scanned(ago(generated) || T.justNow)}</div>
     <span class="lbl">${esc(tailnet)}</span>
   </section>`;
 }
