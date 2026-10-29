@@ -121,6 +121,44 @@
            transform: translateY(-100%); transition: transform .35s var(--metro); }
   .toast.show { transform: none; }
 
+  /* 应用列表（手机）：Windows Phone 开始屏幕右下角箭头进入的字母列表 */
+  .to-apps, .apps { display: none; }
+
+  /* ── 手机：照 Windows Phone 8.1 开始屏幕 ── */
+  @media (max-width: 640px) {
+    :root { --bg: #000; --fg: #fff; --fg-2: oklch(0.7 0 0); }
+    body { background: #000; }
+    .wrap { padding-top: max(env(safe-area-inset-top), 4px); }
+    .tray { position: sticky; top: 0; z-index: 2; background: #000; margin: 0 -16px; padding: 6px 16px 4px; color: var(--fg); }
+    .tray .sig { display: inline-flex; align-items: flex-end; gap: 2px; height: 12px; margin-right: 8px; vertical-align: -1px; }
+    .tray .sig i { width: 3px; background: var(--fg); opacity: .3; }
+    .tray .sig i.on { opacity: 1; }
+    h1, footer, .group h2 { display: none; }
+    /* 所有分组并成一张连续的 4 列网格，组间只靠颜色区分 */
+    .groups { display: grid; grid-template-columns: repeat(4, var(--u)); grid-auto-rows: var(--u);
+              gap: var(--g); grid-auto-flow: row dense; align-items: stretch; margin-top: 12px; }
+    .group, .grid { display: contents; }
+    .note { grid-column: 1 / -1; grid-row: span 3; }
+    /* 转门动画：磁贴绕屏幕左缘翻入，origin 由脚本按位置设置 */
+    .tile.turn { animation: turnstile .55s var(--metro) backwards; }
+    @keyframes turnstile { from { opacity: 0; transform: perspective(900px) rotateY(-80deg); } }
+
+    .to-apps { display: grid; place-items: center; width: 44px; height: 44px; margin: 24px 0 0 auto;
+               border: 2px solid var(--fg); border-radius: 50%; }
+    .to-apps svg { width: 20px; height: 20px; fill: none; stroke: currentColor; stroke-width: 2; }
+    .apps { display: block; position: fixed; inset: 0; z-index: 3; background: #000; overflow-y: auto;
+            padding: max(env(safe-area-inset-top), 16px) 16px 48px; transform: translateX(100%); visibility: hidden;
+            transition: transform .45s var(--metro), visibility 0s .45s; }
+    .apps.open { transform: none; visibility: visible; transition: transform .45s var(--metro); }
+    .apps h3 { width: 48px; height: 48px; margin: 18px 0 8px; display: flex; align-items: flex-end; padding: 0 0 3px 5px;
+               border: 2px solid var(--cobalt); color: var(--fg); font: 300 30px/1 var(--font); }
+    .apps a { display: flex; align-items: center; gap: 12px; padding: 4px 0; font: 300 20px/1.2 var(--font); }
+    .apps a > span:first-child { flex: none; width: 48px; height: 48px; display: grid; place-items: center; background: var(--c, var(--cobalt)); }
+    .apps a svg { width: 26px; height: 26px; fill: none; stroke: #fff; stroke-width: 1.6; stroke-linecap: round; stroke-linejoin: round; }
+    .apps a .ch { font: 300 26px/1 var(--font); color: #fff; }
+    .apps a small { display: block; font-size: 12px; color: var(--fg-2); }
+  }
+
   @media (prefers-reduced-motion: reduce) {
     *, *::before, *::after { animation: none !important; transition: none !important; }
   }
@@ -134,7 +172,9 @@
     <div class="group"><div class="grid"><div class="tile w skel"></div><div class="tile m skel"></div></div></div>
   </main>
   <footer id="keys"></footer>
+  <button class="to-apps" id="to-apps"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 12h15M13 6l6 6-6 6"/></svg></button>
 </div>
+<nav class="apps" id="apps"></nav>
 <div class="toast" id="toast" role="status"></div>
 
 <script>
@@ -158,6 +198,7 @@ const I18N = {
     copied: v => `Copied ${v}`, sep: ', ',
     loadFail: '<strong>Can’t load the service list</strong>data.json failed to load: the scan may not have run yet, or the network is down.',
     retry: 'Reload',
+    allApps: 'All services',
     keys: '<kbd>↑ ↓</kbd> select　<kbd>↵</kbd> open　<kbd>⌘↵</kbd> new tab　<kbd>Esc</kbd> show all　·　rescanned every 10 min',
   },
   zh: {
@@ -171,6 +212,7 @@ const I18N = {
     copied: v => `已复制 ${v}`, sep: '，',
     loadFail: '<strong>暂时读不到服务列表</strong>data.json 加载失败：可能是扫描任务还没跑过，或网络中断。',
     retry: '重新加载',
+    allApps: '全部服务',
     keys: '<kbd>↑ ↓</kbd> 选择　<kbd>↵</kbd> 打开　<kbd>⌘↵</kbd> 新标签　<kbd>Esc</kbd> 返回全部　·　每 10 分钟自动扫描',
   },
 };
@@ -182,6 +224,8 @@ function setLang(dataLang) {
   document.documentElement.lang = lang === 'zh' ? 'zh-CN' : 'en';
   $('title').textContent = T.start;
   $('keys').innerHTML = T.keys;
+  $('to-apps').setAttribute('aria-label', T.allApps);
+  $('apps').setAttribute('aria-label', T.allApps);
 }
 setLang();
 const OTHER = '\0other';   // 未打标签的分组，显示时再翻译
@@ -379,7 +423,48 @@ function render() {
   main.innerHTML = html;
   state.sel = Math.min(state.sel, Math.max(n - 1, 0));
   if (!state.animate) main.querySelectorAll('.group').forEach(el => el.style.animation = 'none');
+  else if (phone.matches) turnstile(main);
+  renderApps();
 }
+
+const phone = matchMedia('(max-width: 640px)');
+
+// 先左列后右列、自上而下依次翻入，转轴都在屏幕左缘
+function turnstile(root) {
+  const left = root.getBoundingClientRect().left;
+  root.querySelectorAll('.tile').forEach(t => {
+    const r = t.getBoundingClientRect();
+    if (r.top > innerHeight) return;
+    t.style.transformOrigin = `${left - r.left}px 50%`;
+    t.style.animationDelay = `${Math.round(r.top / 9 + (r.left - left) / 6)}ms`;
+    t.classList.add('turn');
+    t.addEventListener('animationend', () => { t.classList.remove('turn'); t.style.transformOrigin = ''; }, { once: true });
+  });
+}
+
+function renderApps() {
+  const { data } = state;
+  const items = [
+    ...data.services.map(s => ({ name: s.name, url: resolveUrl(s, data.devices), sub: s.device, icon: svg(glyphOf(s)) })),
+    ...(data.bookmarks || []).map(b => ({ name: b.name, url: b.url, sub: b.note || '', icon: `<span class="ch">${esc(([...b.name.trim()][0] || '?').toUpperCase())}</span>` })),
+  ].sort((a, b) => a.name.localeCompare(b.name, undefined, { sensitivity: 'base' }));
+  let html = '', last = '';
+  for (const it of items) {
+    const k = /^[a-z]/i.test(it.name) ? it.name[0].toUpperCase() : '#';
+    if (k !== last) { html += `<h3>${k}</h3>`; last = k; }
+    html += `<a href="${esc(it.url)}" data-app="${esc(it.url)}"><span>${it.icon}</span><span>${esc(it.name)}${it.sub ? `<small>${esc(it.sub)}</small>` : ''}</span></a>`;
+  }
+  $('apps').innerHTML = html;
+}
+
+// 应用列表走浏览器历史，手机上的返回手势能关掉它
+function openApps(open) {
+  if (open === $('apps').classList.contains('open')) return;
+  $('apps').classList.toggle('open', open);
+  if (open) { $('apps').scrollTop = 0; history.pushState({ apps: 1 }, ''); }
+  else if (history.state?.apps) history.back();
+}
+addEventListener('popstate', () => $('apps').classList.remove('open'));
 
 // ── 动态磁贴：随机挑一块带背面的磁贴向上滑出，几秒后滑回 ──
 function livePeek() {
@@ -441,6 +526,9 @@ function select(i) {
 }
 
 document.addEventListener('click', e => {
+  if (e.target.closest('#to-apps')) { openApps(true); return; }
+  const app = e.target.closest('[data-app]');
+  if (app && !e.metaKey && !e.ctrlKey && e.button === 0) { e.preventDefault(); go(app.dataset.app, false); return; }
   if (e.target.closest('#more')) { state.showOffline = !state.showOffline; refresh(); return; }
   const cp = e.target.closest('[data-copy]');
   if (cp) { navigator.clipboard?.writeText(cp.dataset.copy).then(() => toast(T.copied(cp.dataset.copy))); return; }
@@ -451,6 +539,7 @@ document.addEventListener('click', e => {
 });
 
 document.addEventListener('keydown', e => {
+  if (e.key === 'Escape' && $('apps').classList.contains('open')) { openApps(false); return; }
   if (e.key === 'Escape') { state.device = null; state.sel = 0; refresh(); return; }
   const move = { ArrowDown: 1, ArrowUp: -1, ArrowRight: 1, ArrowLeft: -1 }[e.key];
   if (move) { e.preventDefault(); select(state.sel + move); return; }
@@ -467,7 +556,9 @@ function load() {
       state.data = data;
       setLang(data.lang);
       document.title = data.title;
-      $('tray-l').textContent = data.tailnet;
+      const bars = Math.ceil(data.devices.filter(d => d.online).length / Math.max(data.devices.length, 1) * 5);
+      $('tray-l').innerHTML = `<span class="sig" aria-hidden="true">${[1, 2, 3, 4, 5].map(i =>
+        `<i class="${i <= bars ? 'on' : ''}" style="height:${i * 20}%"></i>`).join('')}</span>${esc(data.tailnet)}`;
       loadState();
       render();
       setInterval(() => { state.animate = false; render(); }, 60000);   // 刷新「扫描于」时间
