@@ -1,0 +1,9 @@
+{
+  "MagicDNSSuffix": "example-tailnet.ts.net",
+  "CurrentTailnet": { "Name": "example.github" },
+  "Self": { "HostName": "Mac mini", "DNSName": "mac-mini.example-tailnet.ts.net.", "TailscaleIPs": ["100.64.0.10"], "OS": "macOS", "Online": true },
+  "Peer": {
+    "a": { "HostName": "nas", "DNSName": "nas.example-tailnet.ts.net.", "TailscaleIPs": ["100.64.0.12"], "OS": "linux", "Online": true },
+    "b": { "HostName": "localhost", "DNSName": "iphone.example-tailnet.ts.net.", "TailscaleIPs": ["100.64.0.20"], "OS": "iOS", "Online": false, "LastSeen": "2026-10-01T08:00:00Z" }
+  }
+}

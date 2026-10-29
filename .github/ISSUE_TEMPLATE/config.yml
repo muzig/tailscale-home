@@ -1,0 +1,8 @@
+blank_issues_enabled: false
+contact_links:
+  - name: Question or idea to discuss
+    url: https://github.com/muzig/tailscale-home/discussions
+    about: Setup questions and open-ended ideas go to Discussions.
+  - name: Security vulnerability
+    url: https://github.com/muzig/tailscale-home/security/advisories/new
+    about: Please report privately, not as an issue.

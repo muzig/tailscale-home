@@ -1,6 +1,8 @@
 # Tailnet Home
 
-[English](README.md) · [简体中文](README.zh-CN.md)
+[![CI](https://github.com/muzig/tailscale-home/actions/workflows/ci.yml/badge.svg)](https://github.com/muzig/tailscale-home/actions/workflows/ci.yml) [![Release](https://img.shields.io/github/v/release/muzig/tailscale-home)](https://github.com/muzig/tailscale-home/releases) [![License: MIT](https://img.shields.io/badge/license-MIT-blue)](LICENSE)
+
+[English](README.md) · [简体中文](README.zh-CN.md) · **[Live demo](https://muzig.github.io/tailscale-home/)** — best on a phone
 
 A start page for your [Tailscale](https://tailscale.com) network — every device and every self-hosted service on one Metro-style screen — **plus a free, private dev loop**: ask Claude to change the code from your phone, and refresh the browser on the same phone to see it live.
 
@@ -41,7 +43,7 @@ A start page for your [Tailscale](https://tailscale.com) network — every devic
 
 ## Quick start
 
-Try the UI without Tailscale:
+Just looking? Open the **[live demo](https://muzig.github.io/tailscale-home/)** (a fake tailnet). To run it yourself without Tailscale:
 
 ```bash
 git clone https://github.com/muzig/tailscale-home.git && cd tailscale-home
@@ -91,6 +93,7 @@ No Gitea needed: run the container and a systemd timer from a clone of this repo
 git clone https://github.com/muzig/tailscale-home.git ~/tailscale-home && cd ~/tailscale-home
 mkdir -p var && cp services.example.json var/services.json      # edit it
 docker compose up -d --build                                    # serves var/data.json on 127.0.0.1:4183
+# or skip the build: docker run -d --restart unless-stopped -p 127.0.0.1:4183:80 -v "$PWD/var:/data:ro" ghcr.io/muzig/tailscale-home
 
 mkdir -p ~/.config/systemd/user
 for f in deploy/tailscale-home-scan.{service,timer}; do

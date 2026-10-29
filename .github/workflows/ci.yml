@@ -1,0 +1,40 @@
+# GitHub CI. The self-hosted deploy lives in .gitea/workflows (Gitea ignores .github/ when .gitea/ exists).
+name: CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+
+permissions:
+  contents: read
+
+jobs:
+  check:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+
+      - name: Scanner compiles
+        run: python -m py_compile scan.py
+
+      - name: Scanner smoke test (fake tailscale CLI)
+        run: python tests/smoke.py
+
+      - name: JSON files are valid
+        run: for f in demo/data.json services.example.json tests/fixtures/*.json; do python -m json.tool "$f" > /dev/null || exit 1; done
+
+      - name: Page script parses
+        run: |
+          python - <<'PY'
+          import re, pathlib
+          html = pathlib.Path("public/index.html").read_text()
+          pathlib.Path("page.js").write_text("\n".join(re.findall(r"<script>(.*?)</script>", html, re.S)))
+          PY
+          node --check page.js
+
+      - name: Image builds
+        run: docker build -t tailscale-home:ci .

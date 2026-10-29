@@ -1,0 +1,30 @@
+name: Bug report
+description: Something on the page or in scan.py doesn't work
+labels: [bug]
+body:
+  - type: markdown
+    attributes:
+      value: "Please **don't paste your real `data.json`** — it lists your devices and IPs. Redact or use `demo/data.json`."
+  - type: textarea
+    id: what
+    attributes:
+      label: What happened, and what did you expect?
+    validations:
+      required: true
+  - type: textarea
+    id: repro
+    attributes:
+      label: Steps to reproduce
+      placeholder: "1. Run `python3 scan.py --probe`\n2. Open the page on …"
+  - type: input
+    id: env
+    attributes:
+      label: Environment
+      description: Server OS, how you run it (Docker / LaunchAgent / systemd), browser and device, `tailscale version`
+    validations:
+      required: true
+  - type: textarea
+    id: logs
+    attributes:
+      label: Scanner output or browser console errors
+      render: text
