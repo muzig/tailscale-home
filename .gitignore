@@ -1,0 +1,6 @@
+public/data.json
+services.json
+var/
+.env
+__pycache__/
+.DS_Store

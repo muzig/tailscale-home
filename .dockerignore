@@ -1,0 +1,5 @@
+.git
+var
+.env
+public/data.json
+__pycache__

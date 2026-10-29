@@ -1,0 +1,11 @@
+services:
+  tailscale-home:
+    build: .
+    # CI tags each build with its commit; set IMAGE_TAG in .env to roll back.
+    image: tailscale-home:${IMAGE_TAG:-latest}
+    restart: unless-stopped
+    # Localhost only: exposed to the tailnet through `tailscale serve`.
+    ports:
+      - "127.0.0.1:${HOME_PORT:-4183}:80"
+    volumes:
+      - ./var:/data:ro

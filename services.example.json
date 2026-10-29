@@ -1,0 +1,16 @@
+{
+  "title": "Tailnet Home",
+  "_comment": "Copy to services.json (git-ignored) and edit. `device` is the MagicDNS short name. Give a full `url`, or just `port`/`path`/`scheme` and scan.py builds the address from the device's Tailscale IP (MagicDNS name for https).",
+  "services": [
+    { "name": "Gitea", "device": "mac-mini", "port": 3000, "icon": "🍵", "tags": ["dev"], "note": "Git hosting + Actions CI" },
+    { "name": "Jellyfin", "device": "nas", "port": 8096, "icon": "🎬", "tags": ["media"] },
+    { "name": "Home Assistant", "device": "raspberrypi", "port": 8123, "icon": "🏠", "tags": ["home"] },
+    { "name": "My App", "device": "mac-mini", "url": "https://mac-mini.example-tailnet.ts.net/app/", "icon": "🚀", "tags": ["dev"] }
+  ],
+  "_comment_hide": "URLs found by `tailscale serve` or --probe that you don't want listed.",
+  "hide": ["http://100.64.0.10:9000/"],
+  "_comment_bookmarks": "Links outside the tailnet, shown in their own section.",
+  "bookmarks": [
+    { "name": "Tailscale admin", "url": "https://login.tailscale.com/admin/machines", "group": "Tools", "note": "Machines, ACLs, DNS" }
+  ]
+}
