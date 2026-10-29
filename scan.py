@@ -44,7 +44,7 @@ def find_cli():
         r = subprocess.run([c, "version"], capture_output=True, text=True, env=CLI_ENV)
         if r.returncode == 0:
             return c
-    sys.exit("找不到可用的 tailscale CLI，可通过 TAILSCALE_BIN 指定路径")
+    sys.exit("tailscale CLI not found; set TAILSCALE_BIN to its path")
 
 
 def ts_json(cli, *args):
@@ -171,15 +171,15 @@ def probe(dev, port):
 
 def main():
     ap = argparse.ArgumentParser()
-    ap.add_argument("--probe", action="store_true", help="扫描在线设备的常见 Web 端口")
+    ap.add_argument("--probe", action="store_true", help="probe common web ports on online devices")
     ap.add_argument("-o", "--out", default=str(ROOT / "public" / "data.json"))
-    ap.add_argument("-s", "--services", default=str(ROOT / "services.json"), help="手动服务清单")
+    ap.add_argument("-s", "--services", default=str(ROOT / "services.json"), help="hand-written services file")
     args = ap.parse_args()
 
     cli = find_cli()
     status = ts_json(cli, "status")
     if not status:
-        sys.exit("tailscale status 失败，Tailscale 是否在运行？")
+        sys.exit("`tailscale status` failed. Is Tailscale running?")
 
     self_dev = to_device(status["Self"], is_self=True)
     devices = [self_dev] + sorted(
@@ -229,6 +229,7 @@ def main():
 
     data = {
         "title": manual.get("title", "Tailnet Home"),
+        "lang": manual.get("lang", ""),   # 空则由浏览器语言决定
         "tailnet": (status.get("CurrentTailnet") or {}).get("Name", ""),
         "suffix": status.get("MagicDNSSuffix", ""),
         "generated": datetime.now(timezone.utc).isoformat(timespec="seconds"),
@@ -238,7 +239,7 @@ def main():
     }
     Path(args.out).write_text(json.dumps(data, ensure_ascii=False, indent=2))
     online = sum(d["online"] for d in devices)
-    print(f"写入 {args.out}: {len(devices)} 台设备({online} 在线), {len(services)} 个服务")
+    print(f"wrote {args.out}: {len(devices)} devices ({online} online), {len(services)} services")
 
 
 if __name__ == "__main__":

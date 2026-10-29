@@ -29,6 +29,7 @@ A start page for your [Tailscale](https://tailscale.com) network — every devic
 - Real reachability check done by the scanner (not the browser), shown as tile status
 - Keyboard first: `↑↓` select, `↵` open, `⌘↵` open in new tab, `Esc` clear filter; filter by tag or device
 - Most-clicked services float to the top (stored in your browser only)
+- English and Chinese UI, following the browser (or force it with `?lang=en` / `"lang"` in `services.json`)
 - One static HTML file + one stdlib-only Python script. No build step, no framework, no database
 
 ## Quick start
@@ -58,6 +59,7 @@ scan.py                        # tailscale status/serve (+ probe) + services.jso
 public/index.html              # the whole UI
 Dockerfile, deploy/nginx.conf  # nginx image serving public/ and /data.json
 deploy/*.plist                 # LaunchAgent template: rerun scan.py every 10 min (macOS)
+deploy/*.service, *.timer      # the same as a systemd user timer (Linux)
 .gitea/workflows/deploy.yml    # push to main → sync, build, deploy, health check
 ```
 
@@ -74,7 +76,27 @@ deploy/*.plist                 # LaunchAgent template: rerun scan.py every 10 mi
 
 The scanner runs on the host, not in the container, because it calls the host's Tailscale CLI. Rollback: set `IMAGE_TAG` in the deploy dir's `.env` to an older commit prefix and run `docker compose up -d --no-build`.
 
-On Linux, replace the LaunchAgent with a systemd timer or cron entry running `scan.py --probe -s var/services.json -o var/data.json`.
+## Linux, without CI
+
+No Gitea needed: run the container and a systemd timer from a clone of this repo.
+
+```bash
+git clone https://github.com/muzig/tailscale-home.git ~/tailscale-home && cd ~/tailscale-home
+mkdir -p var && cp services.example.json var/services.json      # edit it
+docker compose up -d --build                                    # serves var/data.json on 127.0.0.1:4183
+
+mkdir -p ~/.config/systemd/user
+for f in deploy/tailscale-home-scan.{service,timer}; do
+  sed "s|__DEPLOY_DIR__|$PWD|g" "$f" > ~/.config/systemd/user/"$(basename "$f")"
+done
+systemctl --user daemon-reload && systemctl --user enable --now tailscale-home-scan.timer
+loginctl enable-linger "$USER"                                  # keep the timer running after logout
+
+sudo tailscale set --operator="$USER"                           # lets scan.py read `tailscale serve status`
+tailscale serve --bg --set-path / http://127.0.0.1:4183
+```
+
+Update with `git pull && docker compose up -d --build`. To get push-to-deploy, point any CI runner on the server (Gitea Actions, a GitHub Actions self-hosted runner, …) at the same steps as `.gitea/workflows/deploy.yml`.
 
 ## The Claude Code loop
 
@@ -96,7 +118,6 @@ With only `device` + `port`/`path`/`scheme`, the address is built from the devic
 
 ## Notes
 
-- The UI labels are in Chinese for now; PRs adding i18n are welcome.
 - This is an unofficial community project, not affiliated with or endorsed by Tailscale Inc. or Anthropic.
 - Keep it inside your tailnet (`tailscale serve`, not `funnel`): `data.json` lists your devices and IPs. See [SECURITY.md](SECURITY.md).
 

@@ -1,5 +1,5 @@
 <!doctype html>
-<html lang="zh-CN">
+<html lang="en">
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
@@ -129,11 +129,11 @@
 <body>
 <div class="wrap">
   <div class="tray"><span id="tray-l"></span><b id="clock"></b></div>
-  <h1>开始</h1>
+  <h1 id="title"></h1>
   <main id="main" class="groups" aria-busy="true">
     <div class="group"><div class="grid"><div class="tile w skel"></div><div class="tile m skel"></div></div></div>
   </main>
-  <footer><kbd>↑ ↓</kbd> 选择　<kbd>↵</kbd> 打开　<kbd>⌘↵</kbd> 新标签　<kbd>Esc</kbd> 返回全部　·　每 10 分钟自动扫描</footer>
+  <footer id="keys"></footer>
 </div>
 <div class="toast" id="toast" role="status"></div>
 
@@ -144,6 +144,47 @@ if (!location.pathname.endsWith('/') && !location.pathname.endsWith('.html')) {
 }
 
 const $ = id => document.getElementById(id);
+
+// ── 界面文案：?lang= > data.json 的 lang > 浏览器语言 ──
+const I18N = {
+  en: {
+    start: 'Start', devices: 'Devices', other: 'Other', offline: 'Offline', unreachable: 'Unreachable', online: 'Online',
+    collapse: 'Hide', justNow: 'just now', min: m => `${m} min ago`, hr: h => `${h} h ago`, day: d => `${d} d ago`,
+    lastSeen: t => `, last seen ${t}`, onlineOf: n => `/ ${n} online`, scanned: t => `Scanned ${t}`,
+    stale: t => `No new data for ${t.replace(' ago', '')}`, back: '‹ Press Esc or tap the device again',
+    deviceDetail: 'Device details', overview: 'Device overview', nServices: n => `${n} service${n > 1 ? 's' : ''}`, self: 'this device',
+    showOffline: n => `Show ${n} offline device${n > 1 ? 's' : ''}`, hideOffline: 'Hide offline devices',
+    noSvc: '<strong>No services on this device</strong>Add some in services.json; they show up after the next scan.',
+    copied: v => `Copied ${v}`, sep: ', ',
+    loadFail: '<strong>Can’t load the service list</strong>data.json failed to load: the scan may not have run yet, or the network is down.',
+    retry: 'Reload',
+    keys: '<kbd>↑ ↓</kbd> select　<kbd>↵</kbd> open　<kbd>⌘↵</kbd> new tab　<kbd>Esc</kbd> show all　·　rescanned every 10 min',
+  },
+  zh: {
+    start: '开始', devices: '设备', other: '其他', offline: '离线', unreachable: '不可达', online: '在线',
+    collapse: '收起', justNow: '刚刚', min: m => `${m} 分钟前`, hr: h => `${h} 小时前`, day: d => `${d} 天前`,
+    lastSeen: t => `，最后出现于 ${t}`, onlineOf: n => `/ ${n} 台在线`, scanned: t => `扫描于 ${t}`,
+    stale: t => `数据已${t.replace('前', '')}未更新`, back: '‹ 按 Esc 或再点一次设备返回',
+    deviceDetail: '设备详情', overview: '设备概况', nServices: n => `${n} 个服务`, self: '本机',
+    showOffline: n => `显示 ${n} 台离线设备`, hideOffline: '收起离线设备',
+    noSvc: '<strong>这台设备上没有服务</strong>在 services.json 里为它添加，下次扫描后出现在这里。',
+    copied: v => `已复制 ${v}`, sep: '，',
+    loadFail: '<strong>暂时读不到服务列表</strong>data.json 加载失败：可能是扫描任务还没跑过，或网络中断。',
+    retry: '重新加载',
+    keys: '<kbd>↑ ↓</kbd> 选择　<kbd>↵</kbd> 打开　<kbd>⌘↵</kbd> 新标签　<kbd>Esc</kbd> 返回全部　·　每 10 分钟自动扫描',
+  },
+};
+const pickLang = pref => /^zh/i.test(pref || '') ? 'zh' : pref ? 'en' : null;
+let T;
+function setLang(dataLang) {
+  const lang = pickLang(new URLSearchParams(location.search).get('lang')) || pickLang(dataLang) || pickLang(navigator.language) || 'en';
+  T = I18N[lang];
+  document.documentElement.lang = lang === 'zh' ? 'zh-CN' : 'en';
+  $('title').textContent = T.start;
+  $('keys').innerHTML = T.keys;
+}
+setLang();
+const OTHER = '\0other';   // 未打标签的分组，显示时再翻译
 // engaged：用户按过方向键之后才显示选中框
 const state = { data: null, device: null, sel: 0, animate: true, engaged: false, showOffline: false };
 const usage = (() => { try { return JSON.parse(localStorage.getItem('tsh-usage') || '{}'); } catch { return {}; } })();
@@ -217,10 +258,10 @@ const short = d => label(d).replace(/^.*?['’]s\s+/, '');   // 「Alice’s Mac
 function ago(iso) {
   if (!iso || iso.startsWith('0001')) return '';
   const m = Math.round((Date.now() - new Date(iso)) / 60000);
-  if (m < 1) return '刚刚';
-  if (m < 60) return `${m} 分钟前`;
-  if (m < 1440) return `${Math.round(m / 60)} 小时前`;
-  return `${Math.round(m / 1440)} 天前`;
+  if (m < 1) return T.justNow;
+  if (m < 60) return T.min(m);
+  if (m < 1440) return T.hr(Math.round(m / 60));
+  return T.day(Math.round(m / 1440));
 }
 
 function services() {
@@ -238,8 +279,8 @@ function groupBy(list, key) {
     if (!groups.has(g)) groups.set(g, []);
     groups.get(g).push(x);
   }
-  const other = groups.get('其他');
-  if (other) { groups.delete('其他'); groups.set('其他', other); }
+  const other = groups.get(OTHER);
+  if (other) { groups.delete(OTHER); groups.set(OTHER, other); }
   return [...groups];
 }
 
@@ -248,12 +289,12 @@ let n = 0;   // 可导航条目序号
 function svcTile(s, size) {
   const d = deviceOf(s.device);
   const off = d && !d.online;
-  const flag = off ? '离线' : s.up === false ? '不可达' : '';    // 可达性由 scan.py 在服务器端检查
+  const flag = off ? T.offline : s.up === false ? T.unreachable : '';    // 可达性由 scan.py 在服务器端检查
   const desc = s.source === 'manual' && s.note ? s.note : '';
   const meta = [state.device ? '' : d ? short(d) : s.device, gate(s.url)].filter(Boolean).join(' · ');
   const i = n++;
   return `<a class="tile ${size}${off ? ' dim' : ''}${state.engaged && i === state.sel ? ' sel' : ''}" data-nav data-i="${i}"
-             href="${esc(s.url)}" data-url="${esc(s.url)}" title="${esc(`${s.name}\n${s.url}`)}" aria-label="${esc(s.name)}${flag ? '，' + flag : ''}">
+             href="${esc(s.url)}" data-url="${esc(s.url)}" title="${esc(`${s.name}\n${s.url}`)}" aria-label="${esc(s.name)}${flag ? T.sep + flag : ''}">
     <div class="faces">
       <div class="face"><div class="glyph">${svg(glyphOf(s))}</div></div>
       ${size !== 's' ? `<div class="face back"><p>${esc(desc || s.name)}</p><span>${esc(meta)}</span></div>` : ''}
@@ -267,23 +308,23 @@ function overviewTile() {
   const { devices, services: all, tailnet, generated } = state.data;
   const d = state.device && deviceOf(state.device);
   if (d) {
-    const st = d.online ? '在线' : `离线${ago(d.lastSeen) ? '，最后出现于 ' + ago(d.lastSeen) : ''}`;
-    return `<section class="tile w ov" aria-label="设备详情">
+    const st = d.online ? T.online : `${T.offline}${ago(d.lastSeen) ? T.lastSeen(ago(d.lastSeen)) : ''}`;
+    return `<section class="tile w ov" aria-label="${T.deviceDetail}">
       <div class="dev-name">${esc(short(d))}</div>
       <div class="sub">${esc(d.os)} · ${st}</div>
       <dl>
         <dt>IP</dt><dd><button class="copy" data-copy="${esc(d.ip)}">${esc(d.ip)}</button></dd>
         <dt>DNS</dt><dd><button class="copy" data-copy="${esc(d.dns)}">${esc(d.dns)}</button></dd>
       </dl>
-      <span class="lbl">‹ 按 Esc 或再点一次设备返回</span>
+      <span class="lbl">${T.back}</span>
       <span class="badge">${all.filter(s => s.device === d.name).length}</span>
     </section>`;
   }
   const online = devices.filter(x => x.online).length;
   const stale = Date.now() - new Date(generated) > 30 * 60000;   // 扫描每 10 分钟一次，超过 30 分钟说明扫描停了
-  return `<section class="tile w ov" aria-label="设备概况">
-    <div class="num">${online}<small>/ ${devices.length} 台在线</small></div>
-    <div class="sub">${stale ? `<span class="stale">数据已${ago(generated).replace('前', '')}未更新</span>` : `扫描于 ${ago(generated) || '刚刚'}`}</div>
+  return `<section class="tile w ov" aria-label="${T.overview}">
+    <div class="num">${online}<small>${T.onlineOf(devices.length)}</small></div>
+    <div class="sub">${stale ? `<span class="stale">${T.stale(ago(generated))}</span>` : T.scanned(ago(generated) || T.justNow)}</div>
     <span class="lbl">${esc(tailnet)}</span>
   </section>`;
 }
@@ -295,14 +336,14 @@ function deviceTiles() {
   const offline = devices.filter(d => !d.online).length;
   return shown.map(d => `
     <button class="tile s${d.online ? '' : ' dim'}" style="--c:var(--steel)" data-device="${esc(d.name)}" aria-pressed="${state.device === d.name}"
-            title="${esc(label(d))}" aria-label="${esc(label(d))}，${d.online ? '在线' : '离线'}${count(d.name) ? `，${count(d.name)} 个服务` : ''}${d.self ? '，本机' : ''}">
+            title="${esc(label(d))}" aria-label="${esc(label(d))}${T.sep}${d.online ? T.online : T.offline}${count(d.name) ? T.sep + T.nServices(count(d.name)) : ''}${d.self ? T.sep + T.self : ''}">
       <div class="glyph">${svg(deviceGlyph(d))}</div>
       <span class="lbl">${esc(short(d))}</span>${count(d.name) ? `<span class="badge">${count(d.name)}</span>` : ''}
     </button>`).join('') +
     (offline ? `<button class="tile s" style="--c:var(--steel)" id="more" aria-expanded="${state.showOffline}"
-        aria-label="${state.showOffline ? '收起离线设备' : `显示 ${offline} 台离线设备`}">
+        aria-label="${state.showOffline ? T.hideOffline : T.showOffline(offline)}">
       <div class="glyph">${state.showOffline ? svg('more') : `<span class="ch">+${offline}</span>`}</div>
-      <span class="lbl">${state.showOffline ? '收起' : '离线'}</span></button>` : '');
+      <span class="lbl">${state.showOffline ? T.collapse : T.offline}</span></button>` : '');
 }
 
 function render() {
@@ -312,20 +353,20 @@ function render() {
   const list = services();
   // 点击最多的服务用宽磁贴
   const top = !state.device && [...list].sort((a, b) => (usage[b.url] || 0) - (usage[a.url] || 0) || a.order - b.order)[0];
-  const groups = groupBy(list, s => (s.tags || [])[0] || '其他');
-  const marks = state.device ? [] : groupBy(state.data.bookmarks || [], b => b.group || '其他');
+  const groups = groupBy(list, s => (s.tags || [])[0] || OTHER);
+  const marks = state.device ? [] : groupBy(state.data.bookmarks || [], b => b.group || OTHER);
   let g = 0;
 
-  let html = `<section class="group" style="--i:${g++}"><h2>设备</h2><div class="grid" style="--c:var(--cobalt)">${overviewTile()}${deviceTiles()}</div></section>`;
+  let html = `<section class="group" style="--i:${g++}"><h2>${T.devices}</h2><div class="grid" style="--c:var(--cobalt)">${overviewTile()}${deviceTiles()}</div></section>`;
   if (state.device && !list.length) {
-    html += `<div class="note"><strong>这台设备上没有服务</strong>在 services.json 里为它添加，下次扫描后出现在这里。</div>`;
+    html += `<div class="note">${T.noSvc}</div>`;
   }
   groups.forEach(([name, items], gi) => {
-    html += `<section class="group" style="--i:${g++}"><h2>${esc(name)}<small>${items.length}</small></h2>
+    html += `<section class="group" style="--i:${g++}"><h2>${name === OTHER ? T.other : esc(name)}<small>${items.length}</small></h2>
       <div class="grid" style="--c:var(--${PALETTE[gi % PALETTE.length]})">${items.map(s => svcTile(s, s === top ? 'w' : 'm')).join('')}</div></section>`;
   });
   marks.forEach(([name, items], mi) => {
-    html += `<section class="group" style="--i:${g++}"><h2>${esc(name)}<small>${items.length}</small></h2>
+    html += `<section class="group" style="--i:${g++}"><h2>${name === OTHER ? T.other : esc(name)}<small>${items.length}</small></h2>
       <div class="grid" style="--c:var(--${PALETTE[(groups.length + mi) % PALETTE.length]})">${items.map(b => {
         // 网站图标常带不透明底色，转成剪影会变成白方块，所以统一用细体首字母
         const ch = esc(([...b.name.trim()][0] || '?').toUpperCase());
@@ -364,7 +405,7 @@ document.addEventListener('pointerdown', e => {
 
 function tick() {
   const now = new Date();
-  $('clock').textContent = now.toLocaleTimeString('zh-CN', { hour: '2-digit', minute: '2-digit', hour12: false });
+  $('clock').textContent = now.toLocaleTimeString(undefined, { hour: '2-digit', minute: '2-digit', hour12: false });
 }
 
 function saveState() {
@@ -403,7 +444,7 @@ function select(i) {
 document.addEventListener('click', e => {
   if (e.target.closest('#more')) { state.showOffline = !state.showOffline; refresh(); return; }
   const cp = e.target.closest('[data-copy]');
-  if (cp) { navigator.clipboard?.writeText(cp.dataset.copy).then(() => toast(`已复制 ${cp.dataset.copy}`)); return; }
+  if (cp) { navigator.clipboard?.writeText(cp.dataset.copy).then(() => toast(T.copied(cp.dataset.copy))); return; }
   const dv = e.target.closest('[data-device]');
   if (dv) { state.device = state.device === dv.dataset.device ? null : dv.dataset.device; state.sel = 0; refresh(); return; }
   const t = e.target.closest('[data-nav]');
@@ -425,6 +466,7 @@ function load() {
     .then(r => { if (!r.ok) throw new Error(r.status); return r.json(); })
     .then(data => {
       state.data = data;
+      setLang(data.lang);
       document.title = data.title;
       $('tray-l').textContent = data.tailnet;
       loadState();
@@ -434,8 +476,7 @@ function load() {
     })
     .catch(() => {
       $('main').removeAttribute('aria-busy');
-      $('main').innerHTML = `<div class="note" role="alert"><strong>暂时读不到服务列表</strong>
-        data.json 加载失败：可能是扫描任务还没跑过，或网络中断。<br><button id="retry">重新加载</button></div>`;
+      $('main').innerHTML = `<div class="note" role="alert">${T.loadFail}<br><button id="retry">${T.retry}</button></div>`;
       $('retry').onclick = load;
     });
 }
