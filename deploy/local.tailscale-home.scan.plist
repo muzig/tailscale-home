@@ -1,0 +1,20 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+<!-- Template: the deploy workflow replaces __DEPLOY_DIR__ and __HOME__ before installing. -->
+<plist version="1.0">
+<dict>
+  <key>Label</key><string>local.tailscale-home.scan</string>
+  <key>ProgramArguments</key>
+  <array>
+    <string>/usr/bin/python3</string><string>__DEPLOY_DIR__/scan.py</string>
+    <string>--probe</string>
+    <string>-s</string><string>__DEPLOY_DIR__/var/services.json</string>
+    <string>-o</string><string>__DEPLOY_DIR__/var/data.json</string>
+  </array>
+  <key>WorkingDirectory</key><string>__DEPLOY_DIR__</string>
+  <key>RunAtLoad</key><true/>
+  <key>StartInterval</key><integer>600</integer>
+  <key>StandardOutPath</key><string>__HOME__/Library/Logs/tailscale-home-scan.log</string>
+  <key>StandardErrorPath</key><string>__HOME__/Library/Logs/tailscale-home-scan.log</string>
+</dict>
+</plist>

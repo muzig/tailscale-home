@@ -1,0 +1,204 @@
+{
+  "title": "Tailnet Home",
+  "tailnet": "example.github",
+  "suffix": "example-tailnet.ts.net",
+  "generated": "2026-10-29T08:00:00+00:00",
+  "devices": [
+    {
+      "name": "macbook-air",
+      "hostname": "MacBook Air",
+      "dns": "macbook-air.example-tailnet.ts.net",
+      "ip": "100.64.0.11",
+      "os": "macOS",
+      "online": true,
+      "self": true,
+      "lastSeen": "2026-10-29T08:00:00Z"
+    },
+    {
+      "name": "mac-mini",
+      "hostname": "Mac mini",
+      "dns": "mac-mini.example-tailnet.ts.net",
+      "ip": "100.64.0.10",
+      "os": "macOS",
+      "online": true,
+      "self": false,
+      "lastSeen": "2026-10-29T08:00:00Z"
+    },
+    {
+      "name": "nas",
+      "hostname": "nas",
+      "dns": "nas.example-tailnet.ts.net",
+      "ip": "100.64.0.12",
+      "os": "linux",
+      "online": true,
+      "self": false,
+      "lastSeen": "2026-10-29T08:00:00Z"
+    },
+    {
+      "name": "raspberrypi",
+      "hostname": "raspberrypi",
+      "dns": "raspberrypi.example-tailnet.ts.net",
+      "ip": "100.64.0.13",
+      "os": "linux",
+      "online": true,
+      "self": false,
+      "lastSeen": "2026-10-29T08:00:00Z"
+    },
+    {
+      "name": "iphone",
+      "hostname": "iPhone",
+      "dns": "iphone.example-tailnet.ts.net",
+      "ip": "100.64.0.14",
+      "os": "iOS",
+      "online": true,
+      "self": false,
+      "lastSeen": "2026-10-29T08:00:00Z"
+    },
+    {
+      "name": "jetson",
+      "hostname": "jetson",
+      "dns": "jetson.example-tailnet.ts.net",
+      "ip": "100.64.0.15",
+      "os": "linux",
+      "online": false,
+      "self": false,
+      "lastSeen": "2026-10-29T08:00:00Z"
+    }
+  ],
+  "services": [
+    {
+      "name": "Gitea",
+      "device": "mac-mini",
+      "url": "http://100.64.0.10:3000/",
+      "tags": [
+        "dev"
+      ],
+      "source": "manual",
+      "up": true,
+      "icon": "🍵",
+      "note": "Git hosting + Actions CI"
+    },
+    {
+      "name": "My App (preview)",
+      "device": "mac-mini",
+      "url": "https://mac-mini.example-tailnet.ts.net/app/",
+      "tags": [
+        "dev"
+      ],
+      "source": "manual",
+      "up": true,
+      "icon": "🚀",
+      "note": "Auto-deployed on every push"
+    },
+    {
+      "name": "Immich",
+      "device": "nas",
+      "url": "http://100.64.0.12:2283/",
+      "tags": [
+        "media"
+      ],
+      "source": "manual",
+      "up": true,
+      "icon": "📷",
+      "note": "Photo backup"
+    },
+    {
+      "name": "Jellyfin",
+      "device": "nas",
+      "url": "http://100.64.0.12:8096/",
+      "tags": [
+        "media"
+      ],
+      "source": "manual",
+      "up": true,
+      "icon": "🎬",
+      "note": "Movies & shows"
+    },
+    {
+      "name": "Home Assistant",
+      "device": "raspberrypi",
+      "url": "http://100.64.0.13:8123/",
+      "tags": [
+        "home"
+      ],
+      "source": "manual",
+      "up": true,
+      "icon": "🏠",
+      "note": "Lights, sensors, automations"
+    },
+    {
+      "name": "Pi-hole",
+      "device": "raspberrypi",
+      "url": "http://100.64.0.13/admin/",
+      "tags": [
+        "home"
+      ],
+      "source": "manual",
+      "up": true,
+      "icon": "🛡️",
+      "note": "Network-wide ad blocking"
+    },
+    {
+      "name": "Ollama",
+      "device": "mac-mini",
+      "url": "http://100.64.0.10:11434/",
+      "tags": [
+        "ai"
+      ],
+      "source": "probe",
+      "up": true,
+      "icon": "🦙",
+      "note": "Local LLM API"
+    },
+    {
+      "name": "Open WebUI",
+      "device": "mac-mini",
+      "url": "http://100.64.0.10:8080/",
+      "tags": [
+        "ai"
+      ],
+      "source": "manual",
+      "up": true,
+      "icon": "💬",
+      "note": "Chat with local models"
+    },
+    {
+      "name": "Grafana",
+      "device": "nas",
+      "url": "http://100.64.0.12:3001/",
+      "tags": [
+        "dev"
+      ],
+      "source": "manual",
+      "up": true,
+      "icon": "📈",
+      "note": "Dashboards"
+    },
+    {
+      "name": "Notebook",
+      "device": "jetson",
+      "url": "http://100.64.0.15:8888/",
+      "tags": [
+        "ai"
+      ],
+      "source": "manual",
+      "up": false,
+      "icon": "📓",
+      "note": "Jupyter on the GPU box"
+    }
+  ],
+  "bookmarks": [
+    {
+      "name": "Tailscale admin",
+      "url": "https://login.tailscale.com/admin/machines",
+      "group": "Tools",
+      "note": "Machines, ACLs, DNS"
+    },
+    {
+      "name": "Claude",
+      "url": "https://claude.ai/code",
+      "group": "Tools",
+      "note": "Claude Code on the web / Remote Control"
+    }
+  ]
+}

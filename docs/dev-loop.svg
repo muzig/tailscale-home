@@ -1,0 +1,55 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 960 400" font-family="-apple-system,Segoe UI,Helvetica,Arial,sans-serif">
+  <rect width="960" height="400" rx="16" fill="#ffffff"/>
+  <defs>
+    <marker id="a" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto"><path d="M0 0L10 5L0 10z" fill="#475569"/></marker>
+  </defs>
+  <!-- tailnet boundary -->
+  <rect x="220" y="40" width="720" height="260" rx="14" fill="#f1f5f9" stroke="#94a3b8" stroke-dasharray="6 5"/>
+  <text x="236" y="64" font-size="14" fill="#475569" font-weight="600">Your tailnet — private, encrypted, free (Tailscale Personal)</text>
+
+  <!-- phone -->
+  <rect x="30" y="70" width="150" height="250" rx="22" fill="#0f172a"/>
+  <rect x="40" y="88" width="130" height="214" rx="10" fill="#1e293b"/>
+  <text x="105" y="125" font-size="13" fill="#fbbf24" text-anchor="middle" font-weight="700">Claude app</text>
+  <text x="105" y="145" font-size="12" fill="#e2e8f0" text-anchor="middle">Remote Control</text>
+  <rect x="52" y="165" width="106" height="44" rx="8" fill="#334155"/>
+  <text x="105" y="185" font-size="11" fill="#e2e8f0" text-anchor="middle">"make the tiles</text>
+  <text x="105" y="200" font-size="11" fill="#e2e8f0" text-anchor="middle">bigger"</text>
+  <rect x="52" y="222" width="106" height="60" rx="8" fill="#0050ef"/>
+  <text x="105" y="248" font-size="12" fill="#fff" text-anchor="middle" font-weight="600">Browser tab</text>
+  <text x="105" y="266" font-size="11" fill="#dbeafe" text-anchor="middle">refresh → new UI</text>
+  <text x="105" y="345" font-size="13" fill="#0f172a" text-anchor="middle" font-weight="600">Your phone, anywhere</text>
+
+  <!-- laptop -->
+  <rect x="250" y="90" width="190" height="110" rx="10" fill="#fff" stroke="#cbd5e1"/>
+  <text x="345" y="118" font-size="15" fill="#0f172a" text-anchor="middle" font-weight="700">Dev machine</text>
+  <text x="345" y="142" font-size="12" fill="#334155" text-anchor="middle">claude (Remote Control on)</text>
+  <text x="345" y="162" font-size="12" fill="#334155" text-anchor="middle">edits code, commits</text>
+  <text x="345" y="182" font-size="12" fill="#334155" text-anchor="middle" font-family="ui-monospace,Menlo,monospace">git push</text>
+
+  <!-- gitea -->
+  <rect x="490" y="90" width="190" height="110" rx="10" fill="#fff" stroke="#cbd5e1"/>
+  <text x="585" y="118" font-size="15" fill="#0f172a" text-anchor="middle" font-weight="700">Gitea + Actions</text>
+  <text x="585" y="142" font-size="12" fill="#334155" text-anchor="middle">self-hosted, free</text>
+  <text x="585" y="162" font-size="12" fill="#334155" text-anchor="middle">runner on the server</text>
+  <text x="585" y="182" font-size="12" fill="#334155" text-anchor="middle">docker compose up</text>
+
+  <!-- server -->
+  <rect x="730" y="90" width="190" height="110" rx="10" fill="#fff" stroke="#cbd5e1"/>
+  <text x="825" y="118" font-size="15" fill="#0f172a" text-anchor="middle" font-weight="700">Home server</text>
+  <text x="825" y="142" font-size="12" fill="#334155" text-anchor="middle">nginx on 127.0.0.1</text>
+  <text x="825" y="162" font-size="12" fill="#334155" text-anchor="middle">tailscale serve → HTTPS</text>
+  <text x="825" y="182" font-size="12" fill="#334155" text-anchor="middle">*.ts.net certificate</text>
+
+  <!-- arrows -->
+  <path d="M170 187 C210 187 215 145 248 145" fill="none" stroke="#475569" stroke-width="2" marker-end="url(#a)"/>
+  <text x="212" y="205" font-size="11" fill="#475569" text-anchor="middle">1 prompt</text>
+  <path d="M440 145 L488 145" stroke="#475569" stroke-width="2" marker-end="url(#a)"/>
+  <text x="464" y="136" font-size="11" fill="#475569" text-anchor="middle">2</text>
+  <path d="M680 145 L728 145" stroke="#475569" stroke-width="2" marker-end="url(#a)"/>
+  <text x="704" y="136" font-size="11" fill="#475569" text-anchor="middle">3</text>
+  <path d="M825 200 C825 270 300 270 160 252" fill="none" stroke="#0050ef" stroke-width="2.5" marker-end="url(#a)"/>
+  <text x="560" y="283" font-size="12" fill="#0050ef" text-anchor="middle" font-weight="600">4 open https://server.your-tailnet.ts.net — see the change live</text>
+
+  <text x="480" y="378" font-size="14" fill="#0f172a" text-anchor="middle">No public IP · no port forwarding · no cloud bill — every piece is free or self-hosted</text>
+</svg>

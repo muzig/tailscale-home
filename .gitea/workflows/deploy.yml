@@ -1,0 +1,85 @@
+# Build and deploy on the Mac mini's host-mode runner (label: macmini).
+# The web page runs in Docker; scan.py stays a host LaunchAgent because it
+# needs the host's Tailscale CLI. The deploy checkout lives outside the runner
+# workspace so ./var (data.json, services.json) persists between runs.
+#
+# To reuse: change `runs-on` to your runner's label and DEPLOY_DIR if you like.
+# Put your services list at $DEPLOY_DIR/var/services.json (see services.example.json).
+name: deploy
+
+on:
+  push:
+    branches: [main]
+  workflow_dispatch:
+
+concurrency:
+  group: deploy
+  cancel-in-progress: false
+
+jobs:
+  deploy:
+    runs-on: macmini
+    env:
+      DEPLOY_SUBDIR: src/self-hosted/tailscale-home
+      AGENT: local.tailscale-home.scan
+      TOKEN: ${{ gitea.token }}
+      PATH: /usr/local/bin:/opt/homebrew/bin:/usr/bin:/bin:/usr/sbin:/sbin
+    steps:
+      - name: Resolve deploy dir
+        run: echo "DEPLOY_DIR=$HOME/$DEPLOY_SUBDIR" >> "$GITHUB_ENV"
+
+      - name: Sync deploy checkout
+        run: |
+          set -eu
+          [ -d "$DEPLOY_DIR/.git" ] || git init -q -b main "$DEPLOY_DIR"
+          auth="Authorization: Basic $(printf 'ci:%s' "$TOKEN" | base64 | tr -d '\n')"
+          git -C "$DEPLOY_DIR" -c http.extraHeader="$auth" fetch -q --depth 1 "${GITHUB_SERVER_URL%/}/${GITHUB_REPOSITORY}.git" "$GITHUB_SHA"
+          git -C "$DEPLOY_DIR" reset -q --hard FETCH_HEAD
+          git -C "$DEPLOY_DIR" log --oneline -1
+
+      - name: Install scan agent
+        run: |
+          set -eu
+          mkdir -p "$DEPLOY_DIR/var"
+          src="$DEPLOY_DIR/var/$AGENT.plist"
+          sed -e "s|__DEPLOY_DIR__|$DEPLOY_DIR|g" -e "s|__HOME__|$HOME|g" "$DEPLOY_DIR/deploy/$AGENT.plist" > "$src"
+          dst="$HOME/Library/LaunchAgents/$AGENT.plist"
+          domain="gui/$(id -u)"
+          if ! cmp -s "$src" "$dst" || ! launchctl print "$domain/$AGENT" >/dev/null 2>&1; then
+            launchctl bootout "$domain/$AGENT" 2>/dev/null || true
+            cp "$src" "$dst"
+            launchctl bootstrap "$domain" "$dst"
+            echo "scan agent (re)loaded"
+          else
+            # scan.py may have changed; run it now with the new code
+            launchctl kickstart "$domain/$AGENT"
+          fi
+          for i in $(seq 30); do [ -s "$DEPLOY_DIR/var/data.json" ] && break; sleep 2; done
+
+      - name: Build image
+        run: |
+          set -eu
+          cd "$DEPLOY_DIR"
+          tag=$(printf %s "$GITHUB_SHA" | cut -c1-12)
+          IMAGE_TAG=$tag docker compose build
+          docker tag "tailscale-home:$tag" tailscale-home:latest
+
+      - name: Deploy
+        run: |
+          set -eu
+          cd "$DEPLOY_DIR"
+          tag=$(printf %s "$GITHUB_SHA" | cut -c1-12)
+          printf 'IMAGE_TAG=%s\n' "$tag" > .env
+          docker compose up -d --no-build
+          for i in $(seq 30); do
+            if curl -fsS -o /dev/null http://127.0.0.1:4183/ && curl -fsS -o /dev/null http://127.0.0.1:4183/data.json; then
+              echo "tailscale-home:$tag is up"
+              break
+            fi
+            [ "$i" = 30 ] && { docker compose logs --tail 50; tail -20 "$HOME/Library/Logs/tailscale-home-scan.log"; exit 1; }
+            sleep 2
+          done
+
+      - name: Prune old images (keep 5)
+        run: |
+          docker images tailscale-home --format '{{.Tag}}' | grep -v '^latest$' | tail -n +6 | xargs -r -I{} docker rmi "tailscale-home:{}" || true
