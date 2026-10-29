@@ -1,0 +1,8 @@
+# systemd user unit (Linux). Replace __DEPLOY_DIR__, copy to ~/.config/systemd/user/, see README.
+[Unit]
+Description=Tailnet Home: scan the tailnet into var/data.json
+
+[Service]
+Type=oneshot
+WorkingDirectory=__DEPLOY_DIR__
+ExecStart=/usr/bin/python3 __DEPLOY_DIR__/scan.py --probe -s __DEPLOY_DIR__/var/services.json -o __DEPLOY_DIR__/var/data.json

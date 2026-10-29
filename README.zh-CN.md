@@ -29,6 +29,7 @@
 - 可达性由扫描端实测（不受浏览器限制），显示在磁贴状态上
 - 键盘直达：`↑↓` 选择、`↵` 打开、`⌘↵` 新标签打开、`Esc` 清除筛选；按标签或设备筛选
 - 常用服务按点击次数自动排前（只存在本浏览器）
+- 中英文界面，跟随浏览器语言（也可用 `?lang=zh` 或 `services.json` 里的 `"lang"` 指定）
 - 一个静态 HTML + 一个只用标准库的 Python 脚本，无构建、无框架、无数据库
 
 ## 快速开始
@@ -64,7 +65,29 @@ python3 -m http.server -d public 8000
 
    macOS 应用版的 CLI 是 `/Applications/Tailscale.app/Contents/MacOS/Tailscale`，非终端环境需加 `TAILSCALE_BE_CLI=1`。
 
-扫描脚本在宿主机上跑而不进容器，因为要调用宿主机的 Tailscale CLI。回滚：把部署目录 `.env` 里的 `IMAGE_TAG` 改成旧提交前缀，再 `docker compose up -d --no-build`。Linux 上用 systemd timer 或 cron 代替 LaunchAgent。
+扫描脚本在宿主机上跑而不进容器，因为要调用宿主机的 Tailscale CLI。回滚：把部署目录 `.env` 里的 `IMAGE_TAG` 改成旧提交前缀，再 `docker compose up -d --no-build`。
+
+## Linux（不用 CI）
+
+不需要 Gitea，在仓库目录里跑容器加一个 systemd 定时器即可：
+
+```bash
+git clone https://github.com/muzig/tailscale-home.git ~/tailscale-home && cd ~/tailscale-home
+mkdir -p var && cp services.example.json var/services.json      # 按需编辑
+docker compose up -d --build                                    # 在 127.0.0.1:4183 提供 var/data.json
+
+mkdir -p ~/.config/systemd/user
+for f in deploy/tailscale-home-scan.{service,timer}; do
+  sed "s|__DEPLOY_DIR__|$PWD|g" "$f" > ~/.config/systemd/user/"$(basename "$f")"
+done
+systemctl --user daemon-reload && systemctl --user enable --now tailscale-home-scan.timer
+loginctl enable-linger "$USER"                                  # 注销后定时器继续运行
+
+sudo tailscale set --operator="$USER"                           # 让 scan.py 能读取 tailscale serve status
+tailscale serve --bg --set-path / http://127.0.0.1:4183
+```
+
+更新：`git pull && docker compose up -d --build`。想要 push 即部署，在服务器上装任意 CI runner（Gitea Actions、GitHub Actions 自托管 runner 等），照搬 `.gitea/workflows/deploy.yml` 的步骤即可。
 
 ## Claude Code 开发闭环
 
