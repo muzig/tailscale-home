@@ -1,7 +1,7 @@
 {
   "title": "Tailnet Home",
   "lang": "",
-  "_comment": "Copy to services.json (git-ignored) and edit. `device` is the MagicDNS short name. Give a full `url`, or just `port`/`path`/`scheme` and scan.py builds the address from the device's Tailscale IP (MagicDNS name for https). `lang`: \"en\" or \"zh\"; empty follows the browser.",
+  "_comment": "Copy to services.json (git-ignored) and edit. `device` is the MagicDNS short name. Give a full `url`, or just `port`/`path`/`scheme` and scan.py builds the address from the device's Tailscale IP (MagicDNS name for https). `lang`: \"en\" or \"zh\"; empty follows the browser. Icons are picked from the name; set `glyph` to override: ledger, coin, book, reader, photo, cloud, doc, pen, git, code, car, chart, db, server, spark, home, globe.",
   "services": [
     { "name": "Gitea", "device": "mac-mini", "port": 3000, "icon": "🍵", "tags": ["dev"], "note": "Git hosting + Actions CI" },
     { "name": "Jellyfin", "device": "nas", "port": 8096, "icon": "🎬", "tags": ["media"] },
