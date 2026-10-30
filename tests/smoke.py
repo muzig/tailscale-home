@@ -32,6 +32,6 @@ assert [d["name"] for d in data["devices"]][-1] == "iphone", "offline devices so
 assert services["Jellyfin"]["url"] == "http://100.64.0.12:8096/", services["Jellyfin"]
 assert services["Secure"]["url"] == "https://nas.example-tailnet.ts.net/x/", "https uses the MagicDNS name"
 assert services["mac-mini"]["source"] == "serve" and services["mac-mini"]["url"] == "https://mac-mini.example-tailnet.ts.net/"
-assert data["bookmarks"][0] == {**data["bookmarks"][0], "name": "Launch & post", "url": "notes/draft.html", "group": "Notes"}
+assert data["bookmarks"][0] == {**data["bookmarks"][0], "name": "Launch & post", "url": "notes/draft.html", "group": "Notes", "device": "mac-mini"}
 assert data["bookmarks"][1]["name"] == "Docs"
 print(f"ok: {len(data['devices'])} devices, {len(data['services'])} services")

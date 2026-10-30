@@ -459,7 +459,8 @@ function render() {
   const groups = groupBy(list, s => (s.tags || [])[0] || OTHER);
   const marks = state.device ? [] : groupBy((state.data.bookmarks || []).filter(b => b.kind !== 'note'), b => b.group || OTHER);
   // notes/ 里的私人页面：中磁贴，紧跟设备，不和书签小磁贴挤在一起
-  const notes = state.device ? [] : (state.data.bookmarks || []).filter(b => b.kind === 'note');
+  // notes 存在运行 scan.py 的这台机器上：筛选到它时也显示
+  const notes = (state.data.bookmarks || []).filter(b => b.kind === 'note' && (!state.device || b.device === state.device));
   let g = 0;
 
   let html = `<section class="group" style="--i:${g++}"><h2>${T.devices}</h2><div class="grid" style="--c:var(--cobalt)">${overviewTile()}${deviceTiles()}</div></section>`;

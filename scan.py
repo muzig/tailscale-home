@@ -170,7 +170,7 @@ def probe(dev, port):
     }
 
 
-def notes(out_dir, group="Notes"):
+def notes(out_dir, group="Notes", device=None):
     """Private pages dropped into <out dir>/notes/, newest first. nginx serves them at /notes/."""
     files = sorted((out_dir / "notes").glob("*.html"), key=lambda f: f.stat().st_mtime, reverse=True)
     marks = []
@@ -178,7 +178,7 @@ def notes(out_dir, group="Notes"):
         m = re.search(r"<title>(.*?)</title>", f.read_text(errors="replace"), re.S | re.I)
         when = datetime.fromtimestamp(f.stat().st_mtime).strftime("%Y-%m-%d %H:%M")
         marks.append({"name": html.unescape(m.group(1).strip()) if m else f.stem,
-                      "url": f"notes/{f.name}", "group": group, "note": when, "kind": "note"})
+                      "url": f"notes/{f.name}", "group": group, "note": when, "kind": "note", "device": device})
     return marks
 
 
@@ -248,7 +248,7 @@ def main():
         "generated": datetime.now(timezone.utc).isoformat(timespec="seconds"),
         "devices": devices,
         "services": services,
-        "bookmarks": notes(Path(args.out).resolve().parent, manual.get("notes_group") or "Notes") + manual.get("bookmarks", []),
+        "bookmarks": notes(Path(args.out).resolve().parent, manual.get("notes_group") or "Notes", self_dev["name"]) + manual.get("bookmarks", []),
         "labels": manual.get("labels", {}),   # 分组名的其他语言显示名
     }
     Path(args.out).write_text(json.dumps(data, ensure_ascii=False, indent=2))
