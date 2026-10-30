@@ -37,7 +37,7 @@ A start page for your [Tailscale](https://tailscale.com) network — every devic
 - Real reachability check done by the scanner (not the browser), shown as tile status
 - Keyboard first: `↑↓` select, `↵` open, `⌘↵` open in new tab, `Esc` clear filter; filter by tag or device
 - Most-clicked services float to the top (stored in your browser only)
-- On a phone it turns into a Windows Phone 8.1 Start screen: black background, one accent color, turnstile animation, and an A–Z list behind the → button. Pin just the tiles you want with `start` in `services.json`; the rest live in the A–Z list
+- On a phone it turns into a Windows Phone 8.1 Start screen: black background, one accent color, turnstile animation, and an A–Z list behind the → button. Pin just the tiles you want with `start` in `services.json` (phone and desktop); the rest live in the A–Z list
 - English and Chinese UI: English by default, switch with the button next to the clock (remembered per browser), or set it with `?lang=zh` / `"lang"` in `services.json`
 - One static HTML file + one stdlib-only Python script. No build step, no framework, no database
 

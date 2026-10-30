@@ -138,8 +138,26 @@
            transform: translateY(-100%); transition: transform .35s var(--metro); }
   .toast.show { transform: none; }
 
-  /* 应用列表（手机）：Windows Phone 开始屏幕右下角箭头进入的字母列表 */
-  .to-apps, .apps { display: none; }
+  /* 应用列表：Windows Phone 开始屏幕右下角箭头进入的字母列表，电脑上也能用 */
+  .to-apps { display: grid; place-items: center; width: 44px; height: 44px; margin: 24px 0 0 auto;
+             border: 2px solid var(--fg); border-radius: 50%; }
+  .to-apps svg { width: 20px; height: 20px; fill: none; stroke: currentColor; stroke-width: 2; }
+  .apps { display: block; position: fixed; inset: 0; z-index: 3; background: var(--bg); overflow-y: auto;
+          padding: 0 max(16px, calc(50% - 380px)) 48px; transform: translateX(100%); visibility: hidden; touch-action: pan-y;
+          transition: transform .45s var(--metro), visibility 0s .45s; }
+  .apps.open { transform: none; visibility: visible; transition: transform .45s var(--metro); }
+  .apps-top { position: sticky; top: 0; z-index: 1; display: flex; align-items: center; gap: 14px; margin: 0 -16px;
+              padding: max(env(safe-area-inset-top), 12px) 16px 10px; background: var(--bg); font: 600 13px/1 var(--font);
+              letter-spacing: .06em; text-transform: uppercase; }
+  .apps-top button { display: grid; place-items: center; width: 40px; height: 40px; border: 2px solid var(--fg); border-radius: 50%; }
+  .apps-top svg { width: 18px; height: 18px; fill: none; stroke: currentColor; stroke-width: 2; }
+  .apps h3 { width: 48px; height: 48px; margin: 18px 0 8px; display: flex; align-items: flex-end; padding: 0 0 3px 5px;
+             border: 2px solid var(--accent); color: var(--fg); font: 300 30px/1 var(--font); }
+  .apps a { display: flex; align-items: center; gap: 12px; padding: 4px 0; font: 300 20px/1.2 var(--font); }
+  .apps a > span:first-child { flex: none; width: 48px; height: 48px; display: grid; place-items: center; background: var(--accent); }
+  .apps a svg { width: 26px; height: 26px; fill: none; stroke: #fff; stroke-width: 1.6; stroke-linecap: round; stroke-linejoin: round; }
+  .apps a .ch { font: 300 26px/1 var(--font); color: #fff; }
+  .apps a small { display: block; font-size: 12px; color: var(--fg-2); }
 
   /* ── 手机：照 Windows Phone 8.1 开始屏幕 ── */
   @media (max-width: 640px) {
@@ -161,25 +179,6 @@
     .tile.turn { animation: turnstile .55s var(--metro) backwards; }
     @keyframes turnstile { from { opacity: 0; transform: perspective(900px) rotateY(-80deg); } }
 
-    .to-apps { display: grid; place-items: center; width: 44px; height: 44px; margin: 24px 0 0 auto;
-               border: 2px solid var(--fg); border-radius: 50%; }
-    .to-apps svg { width: 20px; height: 20px; fill: none; stroke: currentColor; stroke-width: 2; }
-    .apps { display: block; position: fixed; inset: 0; z-index: 3; background: #000; overflow-y: auto;
-            padding: 0 16px 48px; transform: translateX(100%); visibility: hidden; touch-action: pan-y;
-            transition: transform .45s var(--metro), visibility 0s .45s; }
-    .apps.open { transform: none; visibility: visible; transition: transform .45s var(--metro); }
-    .apps-top { position: sticky; top: 0; z-index: 1; display: flex; align-items: center; gap: 14px; margin: 0 -16px;
-                padding: max(env(safe-area-inset-top), 12px) 16px 10px; background: #000; font: 600 13px/1 var(--font);
-                letter-spacing: .06em; text-transform: uppercase; }
-    .apps-top button { display: grid; place-items: center; width: 40px; height: 40px; border: 2px solid var(--fg); border-radius: 50%; }
-    .apps-top svg { width: 18px; height: 18px; fill: none; stroke: currentColor; stroke-width: 2; }
-    .apps h3 { width: 48px; height: 48px; margin: 18px 0 8px; display: flex; align-items: flex-end; padding: 0 0 3px 5px;
-               border: 2px solid var(--accent); color: var(--fg); font: 300 30px/1 var(--font); }
-    .apps a { display: flex; align-items: center; gap: 12px; padding: 4px 0; font: 300 20px/1.2 var(--font); }
-    .apps a > span:first-child { flex: none; width: 48px; height: 48px; display: grid; place-items: center; background: var(--accent); }
-    .apps a svg { width: 26px; height: 26px; fill: none; stroke: #fff; stroke-width: 1.6; stroke-linecap: round; stroke-linejoin: round; }
-    .apps a .ch { font: 300 26px/1 var(--font); color: #fff; }
-    .apps a small { display: block; font-size: 12px; color: var(--fg-2); }
   }
 
   @media (prefers-reduced-motion: reduce) {
@@ -224,7 +223,7 @@ const I18N = {
     copied: v => `Copied ${v}`, sep: ', ',
     loadFail: '<strong>Can’t load the service list</strong>data.json failed to load: the scan may not have run yet, or the network is down.',
     retry: 'Reload', demo: 'Demo · fake tailnet',
-    allApps: 'All services', backToStart: 'Back to Start', other_lang: '中文', switchTo: '切换到中文',
+    allApps: 'All services', backToStart: 'Back to Start', pinned: 'Pinned', other_lang: '中文', switchTo: '切换到中文',
     allOnline: n => `All ${n} devices online`, more: n => `+${n} more`,
     svcUnit: 'services', nDown: n => `${n} unreachable`, allUp: 'All reachable',
     keys: '<kbd>↑ ↓</kbd> select　<kbd>↵</kbd> open　<kbd>⌘↵</kbd> new tab　<kbd>Esc</kbd> show all　·　rescanned every 10 min',
@@ -240,7 +239,7 @@ const I18N = {
     copied: v => `已复制 ${v}`, sep: '，',
     loadFail: '<strong>暂时读不到服务列表</strong>data.json 加载失败：可能是扫描任务还没跑过，或网络中断。',
     retry: '重新加载', demo: '演示 · 虚构数据',
-    allApps: '全部服务', backToStart: '返回开始屏幕', other_lang: 'EN', switchTo: 'Switch to English',
+    allApps: '全部服务', backToStart: '返回开始屏幕', pinned: '已固定', other_lang: 'EN', switchTo: 'Switch to English',
     allOnline: n => `${n} 台设备全部在线`, more: n => `还有 ${n} 台`,
     svcUnit: '个服务', nDown: n => `${n} 个不可达`, allUp: '全部可达',
     keys: '<kbd>↑ ↓</kbd> 选择　<kbd>↵</kbd> 打开　<kbd>⌘↵</kbd> 新标签　<kbd>Esc</kbd> 返回全部　·　每 10 分钟自动扫描',
@@ -481,7 +480,7 @@ function noteTile(b, size = 'm') {
     <span class="lbl">${esc(b.name)}</span></a>`;
 }
 
-// start：手机开始屏幕只放这些磁贴，按名字引用服务、书签或 notes，可写 {"name": "...", "size": "s|m|w"}；
+// start：开始屏幕只放这些磁贴，按名字引用服务、书签或 notes，可写 {"name": "...", "size": "s|m|w"}；
 // 其余的都在左滑的全部服务列表里，就像 WP 没固定到开始屏幕的应用
 function pinnedTiles(pins, list) {
   const marks = state.data.bookmarks || [];
@@ -509,7 +508,7 @@ function render() {
   // notes 默认自成一组紧跟设备；services.json 的 notes_group 指向某个标签时并进那一组
   const host = notes.length && groups.find(([name]) => name === notes[0].group);
   const onPhone = phone.matches;
-  const pins = onPhone && !state.device && Array.isArray(state.data.start) ? state.data.start : null;
+  const pins = !state.device && Array.isArray(state.data.start) ? state.data.start : null;
   let g = 0;
   // 手机上不显示分组标题，各组磁贴直接连成一片
   const section = (title, count, color, tiles) => onPhone ? tiles
@@ -519,7 +518,8 @@ function render() {
   let html = `<section class="group" style="--i:${g++}"><h2>${T.devices}</h2><div class="grid" style="--c:var(--cobalt)">${overviewTile()}${deviceTiles()}</div></section>`;
   let rest = '';
   if (pins) {
-    rest = pinnedTiles(pins, list);
+    const tiles = pinnedTiles(pins, list);
+    rest = tiles && section(T.pinned, pins.length, 'accent', tiles);
   } else {
     if (notes.length && !host) rest += section(groupName(notes[0].group), notes.length, 'mauve', notes.map(b => noteTile(b)).join(''));
     if (state.device && !list.length) rest += `<div class="note">${T.noSvc}</div>`;

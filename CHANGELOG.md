@@ -5,7 +5,7 @@ All notable changes to this project. Versions follow [Semantic Versioning](https
 ## [Unreleased]
 
 ### Added
-- `start` in `services.json`: pin only the tiles you want to the phone Start screen; everything else stays in the A–Z list
+- `start` in `services.json`: pin only the tiles you want to the Start screen (phone and desktop); everything else stays in the A–Z list, now also on desktop behind the → button
 - `accent` in `services.json`: the phone tile color
 
 ### Changed

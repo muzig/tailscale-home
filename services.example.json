@@ -4,7 +4,7 @@
   "_comment_notes_group": "Optional: put pages from notes/ into this tag's group instead of a separate Notes group.",
   "notes_group": "",
   "_comment_live": "Optional per service: `live` fetches a JSON URL on every scan and shows the lines in `show` on the tile back. `{path.to.value}` or `{value:.0f}` (Python format) pick values; `root` picks a sub-object first; $VARS in url/headers come from the environment.",
-  "_comment_start": "Optional: pin only these tiles to the phone Start screen, in this order (service, bookmark or note names; {\"name\": \"Jellyfin\", \"size\": \"w\"} for s/m/w). Everything else stays in the A–Z list. Leave out to show everything. `accent` sets the phone tile color: cobalt, emerald, crimson, teal, magenta, orange, indigo, brown, mauve, violet, olive.",
+  "_comment_start": "Optional: pin only these tiles to the Start screen (phone and desktop), in this order (service, bookmark or note names; {\"name\": \"Jellyfin\", \"size\": \"w\"} for s/m/w). Everything else stays in the A–Z list. Leave out to show everything. `accent` sets the phone tile color: cobalt, emerald, crimson, teal, magenta, orange, indigo, brown, mauve, violet, olive.",
   "start": ["Gitea", { "name": "Jellyfin", "size": "w" }, "Home Assistant"],
   "accent": "cobalt",
   "_comment_labels": "Optional: show group names (service tags, bookmark groups, Notes) in another language when the viewer switches to it.",
