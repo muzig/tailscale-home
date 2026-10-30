@@ -2,7 +2,7 @@
 
 All notable changes to this project. Versions follow [Semantic Versioning](https://semver.org).
 
-## [Unreleased]
+## [0.5.0] — 2026-10-30
 
 ### Added
 - Pick how to show the page on a computer, from the menu next to the clock or `?device=`: Auto, Phone (a phone with a bezel) or Dual screen (a Surface Duo: Start on the left, the tapped service opens on the right); remembered per browser
@@ -59,6 +59,7 @@ First public release.
 - English and Chinese UI
 - Push-to-deploy with Gitea Actions on macOS; Docker Compose + systemd timer on Linux
 
+[0.5.0]: https://github.com/muzig/tailscale-home/compare/v0.4.0...v0.5.0
 [0.4.0]: https://github.com/muzig/tailscale-home/compare/v0.3.0...v0.4.0
 [0.3.0]: https://github.com/muzig/tailscale-home/compare/v0.2.0...v0.3.0
 [0.2.0]: https://github.com/muzig/tailscale-home/compare/v0.1.0...v0.2.0

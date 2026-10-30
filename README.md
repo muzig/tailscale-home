@@ -7,7 +7,7 @@
 A start page for your [Tailscale](https://tailscale.com) network — every device and every self-hosted service on one Metro-style screen — **plus a free, private dev loop**: ask Claude to change the code from your phone, and refresh the browser on the same phone to see it live.
 
 <p align="center">
-  <img src="docs/screenshots/desktop.png" alt="Tailnet Home on desktop" width="100%">
+  <img src="docs/screenshots/desktop.png" alt="Tailnet Home on a computer, dual-screen mode" width="100%">
 </p>
 <p align="center">
   <img src="docs/screenshots/demo-phone.gif" alt="Phone: turnstile animation, device details, A–Z list" width="31%">
@@ -16,7 +16,7 @@ A start page for your [Tailscale](https://tailscale.com) network — every devic
   &nbsp;
   <img src="docs/screenshots/mobile-apps.png" alt="Phone: A–Z list of all services" width="31%">
 </p>
-<p align="center"><sub>Desktop · on a phone: the Start screen in motion, device details, A–Z list</sub></p>
+<p align="center"><sub>On a computer (dual screen) · on a phone: the Start screen in motion, device details, A–Z list</sub></p>
 
 <sub>Screenshots use the fake tailnet in <code>demo/data.json</code>.</sub>
 
