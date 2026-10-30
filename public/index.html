@@ -53,6 +53,9 @@
   /* 状态栏 */
   .tray { display: flex; justify-content: space-between; font-size: 12px; color: var(--fg-2); padding: 4px 0; }
   .tray b { font-weight: 600; color: var(--fg); }
+  .tray-r { display: flex; align-items: center; gap: 14px; }
+  #lang { font-size: 12px; color: var(--fg-2); padding: 2px 0; }
+  @media (hover: hover) { #lang:hover { color: var(--fg); } }
 
   h1 { margin: clamp(18px, 4vw, 36px) 0 clamp(16px, 3vw, 28px); font: 300 clamp(44px, 8vw, 72px)/1 var(--font); letter-spacing: -0.01em; }
 
@@ -182,7 +185,7 @@
 </head>
 <body>
 <div class="wrap">
-  <div class="tray"><span id="tray-l"></span><b id="clock"></b></div>
+  <div class="tray"><span id="tray-l"></span><span class="tray-r"><button id="lang"></button><b id="clock"></b></span></div>
   <h1 id="title"></h1>
   <main id="main" class="groups" aria-busy="true">
     <div class="group"><div class="grid"><div class="tile w skel"></div><div class="tile m skel"></div></div></div>
@@ -204,7 +207,7 @@ if (!location.pathname.endsWith('/') && !location.pathname.endsWith('.html')) {
 
 const $ = id => document.getElementById(id);
 
-// ── 界面文案：?lang= > data.json 的 lang > 浏览器语言 ──
+// ── 界面文案：?lang= > 右上角切换（存在本浏览器）> data.json 的 lang > 英文 ──
 const I18N = {
   en: {
     start: 'Start', devices: 'Devices', other: 'Other', offline: 'Offline', unreachable: 'Unreachable', online: 'Online',
@@ -217,7 +220,7 @@ const I18N = {
     copied: v => `Copied ${v}`, sep: ', ',
     loadFail: '<strong>Can’t load the service list</strong>data.json failed to load: the scan may not have run yet, or the network is down.',
     retry: 'Reload', demo: 'Demo · fake tailnet',
-    allApps: 'All services', backToStart: 'Back to Start',
+    allApps: 'All services', backToStart: 'Back to Start', other_lang: '中文', switchTo: '切换到中文',
     allOnline: n => `All ${n} devices online`, more: n => `+${n} more`,
     svcUnit: 'services', nDown: n => `${n} unreachable`, allUp: 'All reachable',
     keys: '<kbd>↑ ↓</kbd> select　<kbd>↵</kbd> open　<kbd>⌘↵</kbd> new tab　<kbd>Esc</kbd> show all　·　rescanned every 10 min',
@@ -233,7 +236,7 @@ const I18N = {
     copied: v => `已复制 ${v}`, sep: '，',
     loadFail: '<strong>暂时读不到服务列表</strong>data.json 加载失败：可能是扫描任务还没跑过，或网络中断。',
     retry: '重新加载', demo: '演示 · 虚构数据',
-    allApps: '全部服务', backToStart: '返回开始屏幕',
+    allApps: '全部服务', backToStart: '返回开始屏幕', other_lang: 'EN', switchTo: 'Switch to English',
     allOnline: n => `${n} 台设备全部在线`, more: n => `还有 ${n} 台`,
     svcUnit: '个服务', nDown: n => `${n} 个不可达`, allUp: '全部可达',
     keys: '<kbd>↑ ↓</kbd> 选择　<kbd>↵</kbd> 打开　<kbd>⌘↵</kbd> 新标签　<kbd>Esc</kbd> 返回全部　·　每 10 分钟自动扫描',
@@ -242,17 +245,30 @@ const I18N = {
 const pickLang = pref => /^zh/i.test(pref || '') ? 'zh' : pref ? 'en' : null;
 let T;
 function setLang(dataLang) {
-  const lang = pickLang(new URLSearchParams(location.search).get('lang')) || pickLang(dataLang) || pickLang(navigator.language) || 'en';
+  let saved = null;
+  try { saved = localStorage.getItem('tsh-lang'); } catch {}
+  const lang = pickLang(new URLSearchParams(location.search).get('lang')) || pickLang(saved) || pickLang(dataLang) || 'en';
   T = I18N[lang];
   document.documentElement.lang = lang === 'zh' ? 'zh-CN' : 'en';
   $('title').textContent = T.start;
   $('keys').innerHTML = T.keys;
   $('to-apps').setAttribute('aria-label', T.allApps);
+  $('lang').textContent = T.other_lang;
+  $('lang').setAttribute('aria-label', T.switchTo);
   $('apps').setAttribute('aria-label', T.allApps);
   $('apps-title').textContent = T.allApps;
   $('to-start').setAttribute('aria-label', T.backToStart);
 }
 setLang();
+function switchLang() {
+  const next = document.documentElement.lang === 'en' ? 'zh' : 'en';
+  try { localStorage.setItem('tsh-lang', next); } catch {}
+  // 地址栏里的 ?lang= 优先级更高，切换后去掉，否则切不过去
+  const url = new URL(location.href);
+  if (url.searchParams.has('lang')) { url.searchParams.delete('lang'); history.replaceState(history.state, '', url); }
+  setLang(state.data?.lang);
+  if (state.data) { state.animate = false; render(); }
+}
 const OTHER = '\0other';   // 未打标签的分组，显示时再翻译
 // engaged：用户按过方向键之后才显示选中框
 const state = { data: null, device: null, sel: 0, animate: true, engaged: false, showOffline: false };
@@ -626,6 +642,7 @@ function select(i) {
 document.addEventListener('click', e => {
   if (e.target.closest('#to-apps')) { openApps(true); return; }
   if (e.target.closest('#to-start')) { openApps(false); return; }
+  if (e.target.closest('#lang')) { switchLang(); return; }
   const app = e.target.closest('[data-app]');
   if (app && !e.metaKey && !e.ctrlKey && e.button === 0) { e.preventDefault(); go(app.dataset.app, false); return; }
   if (e.target.closest('#more')) { state.showOffline = !state.showOffline; refresh(); return; }
