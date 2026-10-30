@@ -134,7 +134,7 @@ Any web app can use the same loop — this repo is a small, complete example of 
 { "name": "My App", "url": "https://mac-mini.example-tailnet.ts.net/app/" }
 ```
 
-With only `device` + `port`/`path`/`scheme`, the address is built from the device's Tailscale IP (MagicDNS name for https, because `tailscale serve` certificates are bound to it). Hand-written entries win over discovered ones with the same URL. See [`services.example.json`](services.example.json) for `hide` and `bookmarks`.
+With only `device` + `port`/`path`/`scheme`, the address is built from the device's Tailscale IP (MagicDNS name for https, because `tailscale serve` certificates are bound to it). Hand-written entries win over discovered ones with the same URL. See [`services.example.json`](services.example.json) for `hide`, `bookmarks` and `labels` (group names in Chinese when the viewer switches language).
 
 ## Private notes
 

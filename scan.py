@@ -249,6 +249,7 @@ def main():
         "devices": devices,
         "services": services,
         "bookmarks": notes(Path(args.out).resolve().parent) + manual.get("bookmarks", []),
+        "labels": manual.get("labels", {}),   # 分组名的其他语言显示名
     }
     Path(args.out).write_text(json.dumps(data, ensure_ascii=False, indent=2))
     online = sum(d["online"] for d in devices)

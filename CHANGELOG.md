@@ -9,6 +9,7 @@ All notable changes to this project. Versions follow [Semantic Versioning](https
 
 ### Added
 - Language button next to the clock; the choice is remembered per browser
+- `labels` in `services.json`: show group names in Chinese when the viewer switches language
 - Phone: swipe left on the Start screen for the A–Z list, swipe right (or the new back button) to return; the panel follows your finger
 - The overview tile is now a live tile that cycles through online devices, offline devices and service reachability
 - Private notes: `.html` files in `notes/` next to `data.json` are listed in a Notes group and served at `/notes/`

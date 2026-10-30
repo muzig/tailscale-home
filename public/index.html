@@ -389,6 +389,10 @@ function svcTile(s, size) {
   </a>`;
 }
 
+// 分组名来自 services.json 的标签和书签 group；labels 给出其他语言的显示名，如 {"zh": {"Finance": "理财"}}
+const groupName = name => name === OTHER ? T.other
+  : esc(state.data.labels?.[document.documentElement.lang.slice(0, 2)]?.[name] || name);
+
 let ovPage = 0;   // 总览磁贴当前显示第几页，重绘时保持
 
 function overviewTile() {
@@ -460,7 +464,7 @@ function render() {
 
   let html = `<section class="group" style="--i:${g++}"><h2>${T.devices}</h2><div class="grid" style="--c:var(--cobalt)">${overviewTile()}${deviceTiles()}</div></section>`;
   if (notes.length) {
-    html += `<section class="group" style="--i:${g++}"><h2>${esc(notes[0].group)}<small>${notes.length}</small></h2>
+    html += `<section class="group" style="--i:${g++}"><h2>${groupName(notes[0].group)}<small>${notes.length}</small></h2>
       <div class="grid" style="--c:var(--mauve)">${notes.map(b => {
         const i = n++;
         return `<a class="tile m${state.engaged && i === state.sel ? ' sel' : ''}" data-nav data-i="${i}" href="${esc(b.url)}" data-url="${esc(b.url)}"
@@ -476,11 +480,11 @@ function render() {
     html += `<div class="note">${T.noSvc}</div>`;
   }
   groups.forEach(([name, items], gi) => {
-    html += `<section class="group" style="--i:${g++}"><h2>${name === OTHER ? T.other : esc(name)}<small>${items.length}</small></h2>
+    html += `<section class="group" style="--i:${g++}"><h2>${groupName(name)}<small>${items.length}</small></h2>
       <div class="grid" style="--c:var(--${PALETTE[gi % PALETTE.length]})">${items.map(s => svcTile(s, s === top ? 'w' : 'm')).join('')}</div></section>`;
   });
   marks.forEach(([name, items], mi) => {
-    html += `<section class="group" style="--i:${g++}"><h2>${name === OTHER ? T.other : esc(name)}<small>${items.length}</small></h2>
+    html += `<section class="group" style="--i:${g++}"><h2>${groupName(name)}<small>${items.length}</small></h2>
       <div class="grid" style="--c:var(--${PALETTE[(groups.length + mi) % PALETTE.length]})">${items.map(b => {
         // 网站图标常带不透明底色，转成剪影会变成白方块，所以统一用细体首字母
         const ch = esc(([...b.name.trim()][0] || '?').toUpperCase());

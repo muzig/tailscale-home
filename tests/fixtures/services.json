@@ -1,6 +1,7 @@
 {
   "title": "Test Home",
   "lang": "en",
+  "labels": { "zh": { "media": "影音" } },
   "services": [
     { "name": "Jellyfin", "device": "nas", "port": 8096, "tags": ["media"] },
     { "name": "Secure", "device": "nas", "scheme": "https", "path": "/x/" }

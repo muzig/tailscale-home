@@ -24,6 +24,7 @@ devices = {d["name"]: d for d in data["devices"]}
 services = {s["name"]: s for s in data["services"]}
 
 assert data["title"] == "Test Home" and data["lang"] == "en"
+assert data["labels"] == {"zh": {"media": "影音"}}
 assert data["tailnet"] == "example.github"
 assert data["devices"][0]["self"] and data["devices"][0]["name"] == "mac-mini"
 assert devices["iphone"]["online"] is False, "offline peers keep their state"
