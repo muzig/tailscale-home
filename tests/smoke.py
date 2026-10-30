@@ -15,7 +15,7 @@ with tempfile.TemporaryDirectory() as tmp:
     out = Path(tmp) / "data.json"
     (Path(tmp) / "notes").mkdir()
     (Path(tmp) / "notes" / "draft.html").write_text("<title>Launch &amp; post</title>")
-    env = {**os.environ, "TAILSCALE_BIN": str(HERE / "fake-tailscale")}
+    env = {**os.environ, "TAILSCALE_BIN": str(HERE / "fake-tailscale"), "FIXTURES": str(HERE / "fixtures")}
     subprocess.run([sys.executable, str(HERE.parent / "scan.py"), "-s", str(HERE / "fixtures" / "services.json"), "-o", str(out)],
                    env=env, check=True, timeout=60)
     data = json.loads(out.read_text())
@@ -24,6 +24,8 @@ devices = {d["name"]: d for d in data["devices"]}
 services = {s["name"]: s for s in data["services"]}
 
 assert data["title"] == "Test Home" and data["lang"] == "en"
+assert services["Jellyfin"]["live"] == ["89%", "366 km · asleep"], services["Jellyfin"]
+assert "live" not in services["Broken"], "a failing live source is skipped"
 assert data["labels"] == {"zh": {"media": "影音"}}
 assert data["tailnet"] == "example.github"
 assert data["devices"][0]["self"] and data["devices"][0]["name"] == "mac-mini"

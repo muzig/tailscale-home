@@ -136,6 +136,18 @@ Any web app can use the same loop — this repo is a small, complete example of 
 
 With only `device` + `port`/`path`/`scheme`, the address is built from the device's Tailscale IP (MagicDNS name for https, because `tailscale serve` certificates are bound to it). Hand-written entries win over discovered ones with the same URL. See [`services.example.json`](services.example.json) for `hide`, `bookmarks` and `labels` (group names in Chinese when the viewer switches language).
 
+## Live tiles
+
+Give a service a `live` block and the scanner fetches a JSON URL on every scan; the tile flips over to show the values, like a Windows Phone live tile:
+
+```json
+{ "name": "TeslaMate", "device": "mac-mini", "port": 4000,
+  "live": { "url": "http://127.0.0.1:4184/api/v1/cars/1/status", "root": "data",
+            "show": ["{batteryLevel}%", "{idealRange:.0f} km · {state}"] } }
+```
+
+`{a.b.0}` picks a value by path, `{x:.1f}` adds a Python format, `root` picks a sub-object first, and `$VARS` in `url` and `headers` come from the environment so tokens stay out of the file. The request runs on the server, so it can reach `127.0.0.1` and APIs without CORS. A source that fails is skipped for that scan.
+
 ## Private notes
 
 Drop any `.html` file into `notes/` next to `data.json` (`var/notes/` in the Docker setups). The next scan lists it in a **Notes** group, newest first, named by its `<title>`, and nginx serves it at `/notes/`. Set `"notes_group"` in `services.json` to one of your tags to put them in that group instead. Handy for drafts you want to copy on your phone — they stay on your server and inside your tailnet.

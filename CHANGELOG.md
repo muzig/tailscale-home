@@ -8,6 +8,7 @@ All notable changes to this project. Versions follow [Semantic Versioning](https
 - The UI is English by default instead of following the browser language
 
 ### Added
+- Live tiles: a `live` block on a service fetches a JSON URL during the scan and shows the values on the tile back
 - Language button next to the clock; the choice is remembered per browser
 - `labels` in `services.json`: show group names in Chinese when the viewer switches language
 - Phone: swipe left on the Start screen for the A–Z list, swipe right (or the new back button) to return; the panel follows your finger

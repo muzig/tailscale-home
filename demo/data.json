@@ -77,7 +77,11 @@
       "source": "manual",
       "up": true,
       "icon": "🍵",
-      "note": "Git hosting + Actions CI"
+      "note": "Git hosting + Actions CI",
+      "live": [
+        "✓ deploy",
+        "main · 2 min ago"
+      ]
     },
     {
       "name": "My App (preview)",
@@ -101,7 +105,11 @@
       "source": "manual",
       "up": true,
       "icon": "📷",
-      "note": "Photo backup"
+      "note": "Photo backup",
+      "live": [
+        "12,483",
+        "photos · 218 GB"
+      ]
     },
     {
       "name": "Jellyfin",
@@ -125,7 +133,11 @@
       "source": "manual",
       "up": true,
       "icon": "🏠",
-      "note": "Lights, sensors, automations"
+      "note": "Lights, sensors, automations",
+      "live": [
+        "21.5°C",
+        "living room · 3 lights on"
+      ]
     },
     {
       "name": "Pi-hole",
@@ -137,7 +149,11 @@
       "source": "manual",
       "up": true,
       "icon": "🛡️",
-      "note": "Network-wide ad blocking"
+      "note": "Network-wide ad blocking",
+      "live": [
+        "18.2%",
+        "blocked today"
+      ]
     },
     {
       "name": "Ollama",

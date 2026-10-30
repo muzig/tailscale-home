@@ -6,7 +6,8 @@ Sources (merged, de-duplicated by URL):
   2. tailscale serve status --json  -> services exposed by this machine
   3. services.json                  -> hand-maintained services (see services.example.json)
   4. --probe                        -> scan common ports on online peers
-  5. notes/*.html next to the output -> private pages, listed as bookmarks in a "Notes" group
+  5. "live" on a service           -> fetch a JSON URL and show a few values on the tile
+  6. notes/*.html next to the output -> private pages, listed as bookmarks in a "Notes" group
 
 Usage:
   python3 scan.py            # devices + serve + services.json
@@ -150,6 +151,30 @@ def fetch_title(url):
     return html.unescape(m.group(1)).strip() if m else None
 
 
+def dig(data, path):
+    """按 a.b.0.c 取 JSON 里的值。"""
+    for key in path.split(".") if path else []:
+        data = data[int(key)] if isinstance(data, list) else data[key]
+    return data
+
+
+def live(spec):
+    """动态磁贴的数据：请求 spec["url"] 的 JSON，按 show 里的模板生成几行文字。
+
+    模板写法 "{batteryLevel}% · {idealRange:.0f} km"：花括号里是 JSON 路径，冒号后是 Python 格式。
+    url 和 headers 里的 $VAR 从环境变量展开，令牌不必写进 services.json。
+    """
+    headers = {"Accept": "application/json", **{k: os.path.expandvars(v) for k, v in spec.get("headers", {}).items()}}
+    req = urllib.request.Request(os.path.expandvars(spec["url"]), headers=headers)
+    with opener().open(req, timeout=5) as r:
+        data = dig(json.load(r), spec.get("root", ""))
+
+    def fill(m):
+        v = dig(data, m.group(1))
+        return format(v, m.group(2)) if m.group(2) else str(v)
+    return [re.sub(r"\{([^{}:]+)(?::([^{}]*))?\}", fill, line) for line in spec.get("show", [])]
+
+
 def probe(dev, port):
     try:
         with socket.create_connection((dev["ip"], port), timeout=0.8):
@@ -239,6 +264,15 @@ def main():
     with cf.ThreadPoolExecutor(max_workers=32) as ex:
         for s, ok in zip(check, ex.map(lambda s: reachable(s["url"], ips), check)):
             s["up"] = ok
+
+    # 动态磁贴：失败只跳过这一块，不影响整次扫描
+    for s in services:
+        spec = s.pop("live", None)
+        if spec:
+            try:
+                s["live"] = live(spec)
+            except Exception as e:
+                print(f"live data for {s['name']} failed: {e}", file=sys.stderr)
 
     data = {
         "title": manual.get("title", "Tailnet Home"),

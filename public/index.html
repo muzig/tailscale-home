@@ -86,6 +86,8 @@
   .face.back { top: 100%; padding: 10px 12px 28px; display: flex; flex-direction: column; justify-content: flex-end; gap: 4px; }
   .face.back p { margin: 0; font-size: 14px; line-height: 1.35; }
   .face.back span { font-size: 12px; opacity: .85; }
+  .face.back.live { gap: 2px; }
+  .face.back.live p { font: 300 calc(var(--u) * 0.42)/1.05 var(--font); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
 
   .glyph { position: absolute; inset: 0; display: grid; place-items: center; padding-bottom: 8%; }
   .glyph svg { width: 38%; height: 38%; fill: none; stroke: currentColor; stroke-width: 1.6; stroke-linecap: round; stroke-linejoin: round; }
@@ -378,11 +380,15 @@ function svcTile(s, size) {
   const desc = s.source === 'manual' && s.note ? s.note : '';
   const meta = [state.device ? '' : d ? short(d) : s.device, gate(s.url)].filter(Boolean).join(' · ');
   const i = n++;
-  return `<a class="tile ${size}${off ? ' dim' : ''}${state.engaged && i === state.sel ? ' sel' : ''}" data-nav data-i="${i}"
+  // live：scan.py 从服务接口取回的几行数据，第一行大字显示在背面
+  const back = s.live?.length
+    ? `<div class="face back live"><p>${esc(s.live[0])}</p>${s.live.slice(1).map(l => `<span>${esc(l)}</span>`).join('')}</div>`
+    : `<div class="face back"><p>${esc(desc || s.name)}</p><span>${esc(meta)}</span></div>`;
+  return `<a class="tile ${size}${off ? ' dim' : ''}${s.live?.length ? ' live' : ''}${state.engaged && i === state.sel ? ' sel' : ''}" data-nav data-i="${i}"
              href="${esc(s.url)}" data-url="${esc(s.url)}" title="${esc(`${s.name}\n${s.url}`)}" aria-label="${esc(s.name)}${flag ? T.sep + flag : ''}">
     <div class="faces">
       <div class="face"><div class="glyph">${svg(glyphOf(s))}</div></div>
-      ${size !== 's' ? `<div class="face back"><p>${esc(desc || s.name)}</p><span>${esc(meta)}</span></div>` : ''}
+      ${size !== 's' ? back : ''}
     </div>
     <span class="lbl">${esc(s.name)}</span>
     ${flag ? `<span class="flag">${flag}</span>` : ''}
@@ -586,7 +592,9 @@ function livePeek() {
   if (document.hidden || matchMedia('(prefers-reduced-motion: reduce)').matches) return;
   const tiles = [...document.querySelectorAll('.tile:has(.back):not(.peek):not(:hover)')];
   if (!tiles.length) return;
-  const t = tiles[Math.floor(Math.random() * tiles.length)];
+  // 带数据的磁贴翻得更勤
+  const pool = tiles.flatMap(t => t.classList.contains('live') ? [t, t, t] : [t]);
+  const t = pool[Math.floor(Math.random() * pool.length)];
   t.classList.add('peek');
   setTimeout(() => t.classList.remove('peek'), 3500 + Math.random() * 1500);
 }

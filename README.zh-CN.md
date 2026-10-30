@@ -119,6 +119,18 @@ tailscale serve --bg --set-path / http://127.0.0.1:4183
 
 任何 Web 项目都能套用这个流程，本仓库是一个完整的小例子。
 
+## 动态磁贴
+
+给服务加一个 `live`，扫描时会请求这个 JSON 地址，磁贴翻到背面显示数据，就像 Windows Phone 的动态磁贴：
+
+```json
+{ "name": "TeslaMate", "device": "mac-mini", "port": 4000,
+  "live": { "url": "http://127.0.0.1:4184/api/v1/cars/1/status", "root": "data",
+            "show": ["{batteryLevel}%", "{idealRange:.0f} km · {state}"] } }
+```
+
+`{a.b.0}` 按路径取值，`{x:.1f}` 加 Python 格式，`root` 先取子对象；`url` 和 `headers` 里的 `$变量` 从环境变量读取，令牌不用写进文件。请求在服务器上发出，所以能访问 `127.0.0.1`，也没有跨域限制。某个数据源失败只跳过这一次。
+
 ## 私人页面
 
 把任意 `.html` 放进 `data.json` 旁边的 `notes/` 目录（Docker 部署里就是 `var/notes/`），下次扫描后会出现在主页的 **Notes** 分组里（新的在前，名字取 `<title>`），nginx 在 `/notes/` 下提供访问。在 `services.json` 里设 `"notes_group"` 为某个标签，就会并进那个分组。适合放要在手机上复制的草稿，内容只在你的服务器和 tailnet 里。
