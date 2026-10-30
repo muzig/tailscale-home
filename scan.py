@@ -6,6 +6,7 @@ Sources (merged, de-duplicated by URL):
   2. tailscale serve status --json  -> services exposed by this machine
   3. services.json                  -> hand-maintained services (see services.example.json)
   4. --probe                        -> scan common ports on online peers
+  5. notes/*.html next to the output -> private pages, listed as bookmarks in a "Notes" group
 
 Usage:
   python3 scan.py            # devices + serve + services.json
@@ -169,6 +170,18 @@ def probe(dev, port):
     }
 
 
+def notes(out_dir):
+    """Private pages dropped into <out dir>/notes/, newest first. nginx serves them at /notes/."""
+    files = sorted((out_dir / "notes").glob("*.html"), key=lambda f: f.stat().st_mtime, reverse=True)
+    marks = []
+    for f in files:
+        m = re.search(r"<title>(.*?)</title>", f.read_text(errors="replace"), re.S | re.I)
+        when = datetime.fromtimestamp(f.stat().st_mtime).strftime("%Y-%m-%d %H:%M")
+        marks.append({"name": html.unescape(m.group(1).strip()) if m else f.stem,
+                      "url": f"notes/{f.name}", "group": "Notes", "note": when})
+    return marks
+
+
 def main():
     ap = argparse.ArgumentParser()
     ap.add_argument("--probe", action="store_true", help="probe common web ports on online devices")
@@ -235,7 +248,7 @@ def main():
         "generated": datetime.now(timezone.utc).isoformat(timespec="seconds"),
         "devices": devices,
         "services": services,
-        "bookmarks": manual.get("bookmarks", []),
+        "bookmarks": notes(Path(args.out).resolve().parent) + manual.get("bookmarks", []),
     }
     Path(args.out).write_text(json.dumps(data, ensure_ascii=False, indent=2))
     online = sum(d["online"] for d in devices)

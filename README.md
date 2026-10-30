@@ -136,6 +136,10 @@ Any web app can use the same loop — this repo is a small, complete example of 
 
 With only `device` + `port`/`path`/`scheme`, the address is built from the device's Tailscale IP (MagicDNS name for https, because `tailscale serve` certificates are bound to it). Hand-written entries win over discovered ones with the same URL. See [`services.example.json`](services.example.json) for `hide` and `bookmarks`.
 
+## Private notes
+
+Drop any `.html` file into `notes/` next to `data.json` (`var/notes/` in the Docker setups). The next scan lists it in a **Notes** group, newest first, named by its `<title>`, and nginx serves it at `/notes/`. Handy for drafts you want to copy on your phone — they stay on your server and inside your tailnet.
+
 ## Notes
 
 - This is an unofficial community project, not affiliated with or endorsed by Tailscale Inc. or Anthropic.
