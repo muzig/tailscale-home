@@ -5,7 +5,7 @@ All notable changes to this project. Versions follow [Semantic Versioning](https
 ## [Unreleased]
 
 ### Added
-- Desktop layout button next to the clock: a Surface Duo-style dual screen with Start on the left and the A–Z list on the right; remembered per browser
+- Pick how to show the page on a computer, from the menu next to the clock or `?device=`: Auto, Phone (phone-sized) or Dual screen (Surface Duo-style, Start on the left and the A–Z list on the right); remembered per browser
 - `start` in `services.json`: pin only the tiles you want to the Start screen (phone and desktop); everything else stays in the A–Z list, now also on desktop behind the → button
 - `accent` in `services.json`: the phone tile color
 

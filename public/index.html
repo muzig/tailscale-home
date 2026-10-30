@@ -54,11 +54,9 @@
   .tray b { font-weight: 600; color: var(--fg); }
   .tray-r { display: flex; align-items: center; gap: 14px; }
   #lang { font-size: 12px; color: var(--fg-2); padding: 2px 0; }
-  @media (hover: hover) { #lang:hover, #layout:hover { color: var(--fg); } }
-  #layout { display: none; color: var(--fg-2); }
-  #layout svg { width: 20px; height: 14px; fill: none; stroke: currentColor; stroke-width: 1.5; }
-  #layout[aria-pressed="true"] { color: var(--fg); }
-  #layout[aria-pressed="true"] svg { fill: currentColor; fill-opacity: .25; }
+  @media (hover: hover) { #lang:hover, #device:hover { color: var(--fg); } }
+  #device { display: none; font: inherit; font-size: 12px; color: var(--fg-2); background: transparent; border: 0; padding: 2px 0; cursor: pointer; }
+  #device option { background: #000; color: #fff; }
 
   .grid { display: grid; grid-template-columns: repeat(var(--cols), var(--u)); grid-auto-rows: var(--u);
           gap: var(--g); grid-auto-flow: row dense; }
@@ -169,10 +167,14 @@
   .tile.turn { animation: turnstile .55s var(--metro) backwards; }
   @keyframes turnstile { from { opacity: 0; transform: perspective(900px) rotateY(-80deg); } }
 
-  /* ── 布局：电脑上可选。duo 双屏像 Surface Duo，左屏开始屏幕、右屏全部服务，中间是转轴；
+  /* ── 按什么设备显示：电脑上可选（状态栏的下拉框或 ?device=）。auto 按窗口宽度；
+        phone 按手机屏幕大小居中；duo 像 Surface Duo，左屏开始屏幕、右屏全部服务，中间是转轴。
         以后加 tablet 等尺寸时在这里加一种 data-layout ── */
+  @media (min-width: 641px) {
+    #device { display: inline-block; }
+    body[data-layout="phone"] .wrap { --cols: 4; --u: 86px; }
+  }
   @media (min-width: 960px) {
-    #layout { display: inline-grid; place-items: center; }
     body[data-layout="duo"] { display: flex; justify-content: center; align-items: flex-start; }
     body[data-layout="duo"] .wrap { --cols: 4; --u: 96px; margin: 0; flex: none; }
     body[data-layout="duo"] .to-apps, body[data-layout="duo"] #to-start { display: none; }
@@ -189,7 +191,7 @@
 </head>
 <body>
 <div class="wrap">
-  <div class="tray"><span id="tray-l"></span><span class="tray-r"><button id="layout"><svg viewBox="0 0 24 16" aria-hidden="true"><rect x="1" y="1" width="9.5" height="14"/><rect x="13.5" y="1" width="9.5" height="14"/></svg></button><button id="lang"></button><b id="clock"></b></span></div>
+  <div class="tray"><span id="tray-l"></span><span class="tray-r"><select id="device"><option value="auto"></option><option value="phone"></option><option value="duo"></option></select><button id="lang"></button><b id="clock"></b></span></div>
   <main id="main" class="groups" aria-busy="true">
     <div class="group"><div class="grid"><div class="tile w skel"></div><div class="tile m skel"></div></div></div>
   </main>
@@ -222,7 +224,7 @@ const I18N = {
     copied: v => `Copied ${v}`, sep: ', ',
     loadFail: '<strong>Can’t load the service list</strong>data.json failed to load: the scan may not have run yet, or the network is down.',
     retry: 'Reload', demo: 'Demo · fake tailnet',
-    allApps: 'All services', backToStart: 'Back to Start', duo: 'Dual screen', other_lang: '中文', switchTo: '切换到中文',
+    allApps: 'All services', backToStart: 'Back to Start', device: 'Show as', devices_: { auto: 'Auto', phone: 'Phone', duo: 'Dual screen' }, other_lang: '中文', switchTo: '切换到中文',
     allOnline: n => `All ${n} devices online`, more: n => `+${n} more`,
     svcUnit: 'services', nDown: n => `${n} unreachable`, allUp: 'All reachable',
   },
@@ -237,7 +239,7 @@ const I18N = {
     copied: v => `已复制 ${v}`, sep: '，',
     loadFail: '<strong>暂时读不到服务列表</strong>data.json 加载失败：可能是扫描任务还没跑过，或网络中断。',
     retry: '重新加载', demo: '演示 · 虚构数据',
-    allApps: '全部服务', backToStart: '返回开始屏幕', duo: '双屏', other_lang: 'EN', switchTo: 'Switch to English',
+    allApps: '全部服务', backToStart: '返回开始屏幕', device: '显示为', devices_: { auto: '自动', phone: '手机', duo: '双屏' }, other_lang: 'EN', switchTo: 'Switch to English',
     allOnline: n => `${n} 台设备全部在线`, more: n => `还有 ${n} 台`,
     svcUnit: '个服务', nDown: n => `${n} 个不可达`, allUp: '全部可达',
   },
@@ -252,28 +254,34 @@ function setLang(dataLang) {
   document.documentElement.lang = lang === 'zh' ? 'zh-CN' : 'en';
   $('to-apps').setAttribute('aria-label', T.allApps);
   $('lang').textContent = T.other_lang;
-  $('layout').setAttribute('aria-label', T.duo);
-  $('layout').title = T.duo;
+  $('device').setAttribute('aria-label', T.device);
+  $('device').title = T.device;
+  for (const o of $('device').options) o.textContent = T.devices_[o.value];
   $('lang').setAttribute('aria-label', T.switchTo);
   $('apps').setAttribute('aria-label', T.allApps);
   $('apps-title').textContent = T.allApps;
   $('to-start').setAttribute('aria-label', T.backToStart);
 }
 setLang();
-// 电脑上的布局，存在本浏览器；窄屏上 CSS 不生效，始终是单屏
-const LAYOUTS = ['single', 'duo'];
-function setLayout(name) {
+// 按什么设备显示：?device= > 本浏览器记住的选择 > auto；窄屏上 CSS 不生效，始终是手机
+const DEVICES = ['auto', 'phone', 'duo'];
+function setDevice(name) {
   document.body.dataset.layout = name;
-  $('layout').setAttribute('aria-pressed', name === 'duo');
+  $('device').value = name;
 }
-try { setLayout(LAYOUTS.includes(localStorage.getItem('tsh-layout')) ? localStorage.getItem('tsh-layout') : 'single'); }
-catch { setLayout('single'); }
-function nextLayout() {
-  const name = LAYOUTS[(LAYOUTS.indexOf(document.body.dataset.layout) + 1) % LAYOUTS.length];
-  try { localStorage.setItem('tsh-layout', name); } catch {}
-  setLayout(name);
+{
+  let saved = null;
+  try { saved = localStorage.getItem('tsh-device'); } catch {}
+  const asked = new URLSearchParams(location.search).get('device');
+  setDevice(DEVICES.includes(asked) ? asked : DEVICES.includes(saved) ? saved : 'auto');
+}
+$('device').addEventListener('change', e => {
+  try { localStorage.setItem('tsh-device', e.target.value); } catch {}
+  const url = new URL(location.href);
+  if (url.searchParams.has('device')) { url.searchParams.delete('device'); history.replaceState(history.state, '', url); }
+  setDevice(e.target.value);
   if (state.data) turnstile($('main'));
-}
+});
 
 function switchLang() {
   const next = document.documentElement.lang === 'en' ? 'zh' : 'en';
@@ -681,7 +689,6 @@ document.addEventListener('click', e => {
   if (e.target.closest('#to-apps')) { openApps(true); return; }
   if (e.target.closest('#to-start')) { openApps(false); return; }
   if (e.target.closest('#lang')) { switchLang(); return; }
-  if (e.target.closest('#layout')) { nextLayout(); return; }
   const app = e.target.closest('[data-app]');
   if (app && !e.metaKey && !e.ctrlKey && e.button === 0) { e.preventDefault(); go(app.dataset.app, false); return; }
   if (e.target.closest('#more')) { state.showOffline = !state.showOffline; refresh(); return; }
@@ -694,6 +701,7 @@ document.addEventListener('click', e => {
 });
 
 document.addEventListener('keydown', e => {
+  if (e.target.closest('select')) return;   // 设备下拉框自己处理方向键
   if (e.key === 'Escape' && $('apps').classList.contains('open')) { openApps(false); return; }
   if (e.key === 'Escape') { state.device = null; state.sel = 0; refresh(); return; }
   const move = { ArrowDown: 1, ArrowUp: -1, ArrowRight: 1, ArrowLeft: -1 }[e.key];
