@@ -2,6 +2,16 @@
 
 All notable changes to this project. Versions follow [Semantic Versioning](https://semver.org).
 
+## [Unreleased]
+
+### Added
+- `start` in `services.json`: pin only the tiles you want to the phone Start screen; everything else stays in the A–Z list
+- `accent` in `services.json`: the phone tile color
+
+### Changed
+- Phone: all tiles use one accent color like Windows Phone (devices stay grey), and later tiles no longer fill gaps in the device rows
+- Letter tiles skip leading punctuation
+
 ## [0.4.0] — 2026-10-30
 
 ### Changed

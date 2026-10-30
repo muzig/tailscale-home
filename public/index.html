@@ -19,6 +19,7 @@
     --cobalt: #0050ef; --emerald: #008a00; --crimson: #a20025; --teal: #00827f;
     --magenta: #d80073; --orange: #c25100; --indigo: #6a00ff; --brown: #825a2c;
     --mauve: #76608a; --violet: #9a00e6; --olive: #5a7052; --steel: #56687a;
+    --accent: var(--cobalt);   /* 手机开始屏幕的统一主题色，services.json 的 accent 可改 */
 
     --bg: oklch(0.14 0 0);
     --fg: oklch(0.97 0 0);
@@ -150,10 +151,11 @@
     .tray .sig i { width: 3px; background: var(--fg); opacity: .3; }
     .tray .sig i.on { opacity: 1; }
     h1, footer, .group h2 { display: none; }
-    /* 所有分组并成一张连续的 4 列网格，组间只靠颜色区分 */
-    .groups { display: grid; grid-template-columns: repeat(4, var(--u)); grid-auto-rows: var(--u);
-              gap: var(--g); grid-auto-flow: row dense; align-items: stretch; margin-top: 12px; }
-    .group, .grid { display: contents; }
+    /* 设备一块网格、其余磁贴一块网格，后面的小磁贴不会补进设备行；
+       和 WP 一样所有磁贴用同一个主题色（设备保持灰色） */
+    .groups { display: flex; flex-direction: column; gap: var(--g); margin-top: 12px; }
+    .group { animation: none; }
+    .grid { --c: var(--accent) !important; }
     .note { grid-column: 1 / -1; grid-row: span 3; }
     /* 转门动画：磁贴绕屏幕左缘翻入，origin 由脚本按位置设置 */
     .tile.turn { animation: turnstile .55s var(--metro) backwards; }
@@ -172,9 +174,9 @@
     .apps-top button { display: grid; place-items: center; width: 40px; height: 40px; border: 2px solid var(--fg); border-radius: 50%; }
     .apps-top svg { width: 18px; height: 18px; fill: none; stroke: currentColor; stroke-width: 2; }
     .apps h3 { width: 48px; height: 48px; margin: 18px 0 8px; display: flex; align-items: flex-end; padding: 0 0 3px 5px;
-               border: 2px solid var(--cobalt); color: var(--fg); font: 300 30px/1 var(--font); }
+               border: 2px solid var(--accent); color: var(--fg); font: 300 30px/1 var(--font); }
     .apps a { display: flex; align-items: center; gap: 12px; padding: 4px 0; font: 300 20px/1.2 var(--font); }
-    .apps a > span:first-child { flex: none; width: 48px; height: 48px; display: grid; place-items: center; background: var(--c, var(--cobalt)); }
+    .apps a > span:first-child { flex: none; width: 48px; height: 48px; display: grid; place-items: center; background: var(--accent); }
     .apps a svg { width: 26px; height: 26px; fill: none; stroke: #fff; stroke-width: 1.6; stroke-linecap: round; stroke-linejoin: round; }
     .apps a .ch { font: 300 26px/1 var(--font); color: #fff; }
     .apps a small { display: block; font-size: 12px; color: var(--fg-2); }
@@ -455,6 +457,44 @@ function deviceTiles() {
       <span class="lbl">${state.showOffline ? T.collapse : T.offline}</span></button>` : '');
 }
 
+// 首字母磁贴：跳过开头的标点和符号，如「《住宅项目规范》」取「住」
+const initial = name => ([...name.trim()].find(c => /[\p{L}\p{N}]/u.test(c)) || '?').toUpperCase();
+const selCls = i => state.engaged && i === state.sel ? ' sel' : '';
+
+function markTile(b, size = 's') {
+  // 网站图标常带不透明底色，转成剪影会变成白方块，所以统一用细体首字母
+  const i = n++;
+  return `<a class="tile ${size}${selCls(i)}" data-nav data-i="${i}" href="${esc(b.url)}" data-url="${esc(b.url)}"
+             title="${esc(b.note ? `${b.name}\n${b.note}` : b.name)}" aria-label="${esc(b.name)}">
+    <div class="glyph"><span class="ch">${esc(initial(b.name))}</span></div>
+    <span class="lbl">${esc(b.name)}</span></a>`;
+}
+
+function noteTile(b, size = 'm') {
+  const i = n++;
+  return `<a class="tile ${size}${selCls(i)}" data-nav data-i="${i}" href="${esc(b.url)}" data-url="${esc(b.url)}"
+             title="${esc(b.name)}" aria-label="${esc(b.name)}">
+    <div class="faces">
+      <div class="face"><div class="glyph">${svg('doc')}</div></div>
+      ${size !== 's' ? `<div class="face back"><p>${esc(b.name)}</p><span>${esc(b.note || '')}</span></div>` : ''}
+    </div>
+    <span class="lbl">${esc(b.name)}</span></a>`;
+}
+
+// start：手机开始屏幕只放这些磁贴，按名字引用服务、书签或 notes，可写 {"name": "...", "size": "s|m|w"}；
+// 其余的都在左滑的全部服务列表里，就像 WP 没固定到开始屏幕的应用
+function pinnedTiles(pins, list) {
+  const marks = state.data.bookmarks || [];
+  return pins.map(p => {
+    const { name, size } = typeof p === 'string' ? { name: p } : p;
+    const s = list.find(x => x.name === name);
+    if (s) return svcTile(s, size || 'm');
+    const b = marks.find(x => x.name === name);
+    if (!b) return '';
+    return b.kind === 'note' ? noteTile(b, size || 'm') : markTile(b, size || 's');
+  }).join('');
+}
+
 function render() {
   const main = $('main');
   main.removeAttribute('aria-busy');
@@ -464,56 +504,44 @@ function render() {
   const top = !state.device && [...list].sort((a, b) => (usage[b.url] || 0) - (usage[a.url] || 0) || a.order - b.order)[0];
   const groups = groupBy(list, s => (s.tags || [])[0] || OTHER);
   const marks = state.device ? [] : groupBy((state.data.bookmarks || []).filter(b => b.kind !== 'note'), b => b.group || OTHER);
-  // notes/ 里的私人页面：中磁贴，紧跟设备，不和书签小磁贴挤在一起
   // notes 存在运行 scan.py 的这台机器上：筛选到它时也显示
   const notes = (state.data.bookmarks || []).filter(b => b.kind === 'note' && (!state.device || b.device === state.device));
+  // notes 默认自成一组紧跟设备；services.json 的 notes_group 指向某个标签时并进那一组
+  const host = notes.length && groups.find(([name]) => name === notes[0].group);
+  const onPhone = phone.matches;
+  const pins = onPhone && !state.device && Array.isArray(state.data.start) ? state.data.start : null;
   let g = 0;
+  // 手机上不显示分组标题，各组磁贴直接连成一片
+  const section = (title, count, color, tiles) => onPhone ? tiles
+    : `<section class="group" style="--i:${g++}"><h2>${title}<small>${count}</small></h2>
+       <div class="grid" style="--c:var(--${color})">${tiles}</div></section>`;
 
   let html = `<section class="group" style="--i:${g++}"><h2>${T.devices}</h2><div class="grid" style="--c:var(--cobalt)">${overviewTile()}${deviceTiles()}</div></section>`;
-  // notes 默认自成一组紧跟设备；services.json 的 notes_group 指向某个标签时并进那一组
-  const noteTile = b => {
-    const i = n++;
-    return `<a class="tile m${state.engaged && i === state.sel ? ' sel' : ''}" data-nav data-i="${i}" href="${esc(b.url)}" data-url="${esc(b.url)}"
-               title="${esc(b.name)}" aria-label="${esc(b.name)}" style="--c:var(--mauve)">
-      <div class="faces">
-        <div class="face"><div class="glyph">${svg('doc')}</div></div>
-        <div class="face back"><p>${esc(b.name)}</p><span>${esc(b.note || '')}</span></div>
-      </div>
-      <span class="lbl">${esc(b.name)}</span></a>`;
-  };
-  const host = notes.length && groups.find(([name]) => name === notes[0].group);
-  if (notes.length && !host) {
-    html += `<section class="group" style="--i:${g++}"><h2>${groupName(notes[0].group)}<small>${notes.length}</small></h2>
-      <div class="grid">${notes.map(noteTile).join('')}</div></section>`;
+  let rest = '';
+  if (pins) {
+    rest = pinnedTiles(pins, list);
+  } else {
+    if (notes.length && !host) rest += section(groupName(notes[0].group), notes.length, 'mauve', notes.map(b => noteTile(b)).join(''));
+    if (state.device && !list.length) rest += `<div class="note">${T.noSvc}</div>`;
+    groups.forEach(([name, items], gi) => {
+      const extra = host && host[0] === name ? notes : [];
+      rest += section(groupName(name), items.length + extra.length, PALETTE[gi % PALETTE.length],
+        items.map(s => svcTile(s, s === top ? 'w' : 'm')).join('') + extra.map(b => noteTile(b)).join(''));
+    });
+    marks.forEach(([name, items], mi) => {
+      rest += section(groupName(name), items.length, PALETTE[(groups.length + mi) % PALETTE.length], items.map(b => markTile(b)).join(''));
+    });
   }
-  if (state.device && !list.length) {
-    html += `<div class="note">${T.noSvc}</div>`;
-  }
-  groups.forEach(([name, items], gi) => {
-    const extra = host && host[0] === name ? notes : [];
-    html += `<section class="group" style="--i:${g++}"><h2>${groupName(name)}<small>${items.length + extra.length}</small></h2>
-      <div class="grid" style="--c:var(--${PALETTE[gi % PALETTE.length]})">${items.map(s => svcTile(s, s === top ? 'w' : 'm')).join('')}${extra.map(noteTile).join('')}</div></section>`;
-  });
-  marks.forEach(([name, items], mi) => {
-    html += `<section class="group" style="--i:${g++}"><h2>${groupName(name)}<small>${items.length}</small></h2>
-      <div class="grid" style="--c:var(--${PALETTE[(groups.length + mi) % PALETTE.length]})">${items.map(b => {
-        // 网站图标常带不透明底色，转成剪影会变成白方块，所以统一用细体首字母
-        const ch = esc(([...b.name.trim()][0] || '?').toUpperCase());
-        const i = n++;
-        return `<a class="tile s${state.engaged && i === state.sel ? ' sel' : ''}" data-nav data-i="${i}" href="${esc(b.url)}" data-url="${esc(b.url)}"
-                   title="${esc(b.note ? `${b.name}\n${b.note}` : b.name)}" aria-label="${esc(b.name)}">
-          <div class="glyph"><span class="ch">${ch}</span></div>
-          <span class="lbl">${esc(b.name)}</span></a>`;
-      }).join('')}</div></section>`;
-  });
+  html += onPhone ? `<section class="group"><div class="grid">${rest}</div></section>` : rest;
   main.innerHTML = html;
   state.sel = Math.min(state.sel, Math.max(n - 1, 0));
   if (!state.animate) main.querySelectorAll('.group').forEach(el => el.style.animation = 'none');
-  else if (phone.matches) turnstile(main);
+  else if (onPhone) turnstile(main);
   renderApps();
 }
 
 const phone = matchMedia('(max-width: 640px)');
+phone.addEventListener('change', () => { if (state.data) { state.animate = false; render(); } });
 
 // 先左列后右列、自上而下依次翻入，转轴都在屏幕左缘
 function turnstile(root) {
@@ -532,7 +560,7 @@ function renderApps() {
   const { data } = state;
   const items = [
     ...data.services.map(s => ({ name: s.name, url: resolveUrl(s, data.devices), sub: s.device, icon: svg(glyphOf(s)) })),
-    ...(data.bookmarks || []).map(b => ({ name: b.name, url: b.url, sub: b.note || '', icon: `<span class="ch">${esc(([...b.name.trim()][0] || '?').toUpperCase())}</span>` })),
+    ...(data.bookmarks || []).map(b => ({ name: b.name, url: b.url, sub: b.note || '', icon: `<span class="ch">${esc(initial(b.name))}</span>` })),
   ].sort((a, b) => a.name.localeCompare(b.name, undefined, { sensitivity: 'base' }));
   let html = '', last = '';
   for (const it of items) {
@@ -688,6 +716,7 @@ function load() {
     .then(data => {
       state.data = data;
       setLang(data.lang);
+      if (PALETTE.includes(data.accent)) document.documentElement.style.setProperty('--accent', `var(--${data.accent})`);
       document.title = data.title;
       const bars = Math.ceil(data.devices.filter(d => d.online).length / Math.max(data.devices.length, 1) * 5);
       $('tray-l').innerHTML = `<span class="sig" aria-hidden="true">${[1, 2, 3, 4, 5].map(i =>

@@ -47,5 +47,13 @@
       "url": "https://example.com",
       "group": "Tools"
     }
-  ]
+  ],
+  "start": [
+    "Jellyfin",
+    {
+      "name": "Docs",
+      "size": "m"
+    }
+  ],
+  "accent": "emerald"
 }

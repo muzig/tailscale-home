@@ -26,6 +26,7 @@ services = {s["name"]: s for s in data["services"]}
 assert data["title"] == "Test Home" and data["lang"] == "en"
 assert services["Jellyfin"]["live"] == ["89%", "366 km · asleep"], services["Jellyfin"]
 assert "live" not in services["Broken"], "a failing live source is skipped"
+assert data["start"] == ["Jellyfin", {"name": "Docs", "size": "m"}] and data["accent"] == "emerald"
 assert data["labels"] == {"zh": {"media": "影音"}}
 assert data["tailnet"] == "example.github"
 assert data["devices"][0]["self"] and data["devices"][0]["name"] == "mac-mini"
