@@ -10,13 +10,13 @@
   <img src="docs/screenshots/desktop.png" alt="桌面端" width="100%">
 </p>
 <p align="center">
-  <img src="docs/screenshots/mobile.png" alt="手机：开始屏幕" width="31%">
+  <img src="docs/screenshots/demo-phone.gif" alt="手机：转门动画、设备详情、服务列表" width="31%">
   &nbsp;
   <img src="docs/screenshots/mobile-device.png" alt="手机：设备详情" width="31%">
   &nbsp;
   <img src="docs/screenshots/mobile-apps.png" alt="手机：全部服务列表" width="31%">
 </p>
-<p align="center"><sub>桌面端 · 手机端：开始屏幕、设备详情、全部服务列表</sub></p>
+<p align="center"><sub>桌面端 · 手机端：开始屏幕动画、设备详情、全部服务列表</sub></p>
 
 <sub>截图使用 <code>demo/data.json</code> 中的虚构数据。</sub>
 
@@ -40,6 +40,16 @@
 - 手机上切换成 Windows Phone 8.1 开始屏幕：黑底、4 列连续磁贴、转门动画，右下角 → 进入字母排序的全部服务列表
 - 中英文界面，跟随浏览器语言（也可用 `?lang=zh` 或 `services.json` 里的 `"lang"` 指定）
 - 一个静态 HTML + 一个只用标准库的 Python 脚本，无构建、无框架、无数据库
+
+## 和其他主页的区别
+
+[Homepage](https://gethomepage.dev)、[Glance](https://github.com/glanceapp/glance)、[Dashy](https://dashy.to)、[Homer](https://github.com/bastienwirtz/homer) 都是优秀的通用仪表盘：小组件、信息流、几十种集成，代价是一份要手动维护的 YAML。Tailnet Home 做得少得多：
+
+- **tailnet 就是配置。** 设备和 `tailscale serve` 的服务自动出现，`services.json` 只用来补充。
+- **小。** 一个 HTML 加一个只用标准库的 Python 脚本，十分钟能读完，fork 了随便改。
+- **为手机设计。** 不是缩小版的桌面网格，而是 Windows Phone 8.1 开始屏幕。
+
+想要小组件和各种集成，用 Homepage 或 Glance；想要宿主机不装 Tailscale、还能列出编程代理预览页的启动页，看看 [tailhome](https://github.com/mickey/tailhome)。
 
 ## 快速开始
 

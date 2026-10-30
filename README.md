@@ -10,13 +10,13 @@ A start page for your [Tailscale](https://tailscale.com) network — every devic
   <img src="docs/screenshots/desktop.png" alt="Tailnet Home on desktop" width="100%">
 </p>
 <p align="center">
-  <img src="docs/screenshots/mobile.png" alt="Phone: Start screen" width="31%">
+  <img src="docs/screenshots/demo-phone.gif" alt="Phone: turnstile animation, device details, A–Z list" width="31%">
   &nbsp;
   <img src="docs/screenshots/mobile-device.png" alt="Phone: device details" width="31%">
   &nbsp;
   <img src="docs/screenshots/mobile-apps.png" alt="Phone: A–Z list of all services" width="31%">
 </p>
-<p align="center"><sub>Desktop · on a phone: Start screen, device details, A–Z list</sub></p>
+<p align="center"><sub>Desktop · on a phone: the Start screen in motion, device details, A–Z list</sub></p>
 
 <sub>Screenshots use the fake tailnet in <code>demo/data.json</code>.</sub>
 
@@ -40,6 +40,16 @@ A start page for your [Tailscale](https://tailscale.com) network — every devic
 - On a phone it turns into a Windows Phone 8.1 Start screen: black background, one 4-column tile grid, turnstile animation, and an A–Z list behind the → button
 - English and Chinese UI, following the browser (or force it with `?lang=en` / `"lang"` in `services.json`)
 - One static HTML file + one stdlib-only Python script. No build step, no framework, no database
+
+## How it compares
+
+[Homepage](https://gethomepage.dev), [Glance](https://github.com/glanceapp/glance), [Dashy](https://dashy.to) and [Homer](https://github.com/bastienwirtz/homer) are great general-purpose dashboards: widgets, feeds, dozens of integrations — and a YAML file you keep in sync by hand. Tailnet Home does much less:
+
+- **Your tailnet is the config.** Devices and `tailscale serve` services show up on their own; `services.json` is only for extras.
+- **Tiny.** One HTML file and one stdlib-only Python script. Read all of it in ten minutes, fork it, change it.
+- **Built for the phone.** Not a shrunk desktop grid — a Windows Phone 8.1 Start screen.
+
+If you want widgets and integrations, use Homepage or Glance. If you want a launcher that needs no Tailscale on the host and lists coding agents' previews, look at [tailhome](https://github.com/mickey/tailhome).
 
 ## Quick start
 
