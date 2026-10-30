@@ -101,6 +101,13 @@
 
   /* 总览宽磁贴 */
   .ov { padding: 10px 12px; display: flex; flex-direction: column; }
+  .ov.live { padding: 0; }
+  /* 动态总览：几页内容竖排，定时向上翻一页 */
+  .ov .pg { padding: 10px 12px; display: flex; flex-direction: column; }
+  .ov .big { font: 300 calc(var(--u) * 0.36)/1.1 var(--font); }
+  .ov ul { list-style: none; margin: auto 0 18px; padding: 0; font-size: 13px; }
+  .ov li { display: flex; justify-content: space-between; gap: 12px; }
+  .ov li span { opacity: .8; white-space: nowrap; }
   .ov .num { font: 300 calc(var(--u) * 0.95)/1 var(--font); margin-top: auto; }
   .ov .num small { font-size: 15px; margin-left: 6px; font-weight: 400; }
   .ov .sub { font-size: 13px; opacity: .9; margin-bottom: 18px; }
@@ -131,7 +138,7 @@
   /* ── 手机：照 Windows Phone 8.1 开始屏幕 ── */
   @media (max-width: 640px) {
     :root { --bg: #000; --fg: #fff; --fg-2: oklch(0.7 0 0); }
-    body { background: #000; }
+    body { background: #000; touch-action: pan-y; }
     .wrap { padding-top: max(env(safe-area-inset-top), 4px); }
     .tray { position: sticky; top: 0; z-index: 2; background: #000; margin: 0 -16px; padding: 6px 16px 4px; color: var(--fg); }
     .tray .sig { display: inline-flex; align-items: flex-end; gap: 2px; height: 12px; margin-right: 8px; vertical-align: -1px; }
@@ -151,9 +158,14 @@
                border: 2px solid var(--fg); border-radius: 50%; }
     .to-apps svg { width: 20px; height: 20px; fill: none; stroke: currentColor; stroke-width: 2; }
     .apps { display: block; position: fixed; inset: 0; z-index: 3; background: #000; overflow-y: auto;
-            padding: max(env(safe-area-inset-top), 16px) 16px 48px; transform: translateX(100%); visibility: hidden;
+            padding: 0 16px 48px; transform: translateX(100%); visibility: hidden; touch-action: pan-y;
             transition: transform .45s var(--metro), visibility 0s .45s; }
     .apps.open { transform: none; visibility: visible; transition: transform .45s var(--metro); }
+    .apps-top { position: sticky; top: 0; z-index: 1; display: flex; align-items: center; gap: 14px; margin: 0 -16px;
+                padding: max(env(safe-area-inset-top), 12px) 16px 10px; background: #000; font: 600 13px/1 var(--font);
+                letter-spacing: .06em; text-transform: uppercase; }
+    .apps-top button { display: grid; place-items: center; width: 40px; height: 40px; border: 2px solid var(--fg); border-radius: 50%; }
+    .apps-top svg { width: 18px; height: 18px; fill: none; stroke: currentColor; stroke-width: 2; }
     .apps h3 { width: 48px; height: 48px; margin: 18px 0 8px; display: flex; align-items: flex-end; padding: 0 0 3px 5px;
                border: 2px solid var(--cobalt); color: var(--fg); font: 300 30px/1 var(--font); }
     .apps a { display: flex; align-items: center; gap: 12px; padding: 4px 0; font: 300 20px/1.2 var(--font); }
@@ -178,7 +190,10 @@
   <footer id="keys"></footer>
   <button class="to-apps" id="to-apps"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 12h15M13 6l6 6-6 6"/></svg></button>
 </div>
-<nav class="apps" id="apps"></nav>
+<nav class="apps" id="apps">
+  <div class="apps-top"><button id="to-start"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M20 12H5M11 6l-6 6 6 6"/></svg></button><span id="apps-title"></span></div>
+  <div id="apps-list"></div>
+</nav>
 <div class="toast" id="toast" role="status"></div>
 
 <script>
@@ -202,7 +217,9 @@ const I18N = {
     copied: v => `Copied ${v}`, sep: ', ',
     loadFail: '<strong>Can’t load the service list</strong>data.json failed to load: the scan may not have run yet, or the network is down.',
     retry: 'Reload', demo: 'Demo · fake tailnet',
-    allApps: 'All services',
+    allApps: 'All services', backToStart: 'Back to Start',
+    allOnline: n => `All ${n} devices online`, more: n => `+${n} more`,
+    svcUnit: 'services', nDown: n => `${n} unreachable`, allUp: 'All reachable',
     keys: '<kbd>↑ ↓</kbd> select　<kbd>↵</kbd> open　<kbd>⌘↵</kbd> new tab　<kbd>Esc</kbd> show all　·　rescanned every 10 min',
   },
   zh: {
@@ -216,7 +233,9 @@ const I18N = {
     copied: v => `已复制 ${v}`, sep: '，',
     loadFail: '<strong>暂时读不到服务列表</strong>data.json 加载失败：可能是扫描任务还没跑过，或网络中断。',
     retry: '重新加载', demo: '演示 · 虚构数据',
-    allApps: '全部服务',
+    allApps: '全部服务', backToStart: '返回开始屏幕',
+    allOnline: n => `${n} 台设备全部在线`, more: n => `还有 ${n} 台`,
+    svcUnit: '个服务', nDown: n => `${n} 个不可达`, allUp: '全部可达',
     keys: '<kbd>↑ ↓</kbd> 选择　<kbd>↵</kbd> 打开　<kbd>⌘↵</kbd> 新标签　<kbd>Esc</kbd> 返回全部　·　每 10 分钟自动扫描',
   },
 };
@@ -230,6 +249,8 @@ function setLang(dataLang) {
   $('keys').innerHTML = T.keys;
   $('to-apps').setAttribute('aria-label', T.allApps);
   $('apps').setAttribute('aria-label', T.allApps);
+  $('apps-title').textContent = T.allApps;
+  $('to-start').setAttribute('aria-label', T.backToStart);
 }
 setLang();
 const OTHER = '\0other';   // 未打标签的分组，显示时再翻译
@@ -352,6 +373,8 @@ function svcTile(s, size) {
   </a>`;
 }
 
+let ovPage = 0;   // 总览磁贴当前显示第几页，重绘时保持
+
 function overviewTile() {
   const { devices, services: all, tailnet, generated } = state.data;
   const d = state.device && deviceOf(state.device);
@@ -370,9 +393,21 @@ function overviewTile() {
   }
   const online = devices.filter(x => x.online).length;
   const stale = !state.data.demo && Date.now() - new Date(generated) > 30 * 60000;   // 扫描每 10 分钟一次，超过 30 分钟说明扫描停了
-  return `<section class="tile w ov" aria-label="${T.overview}">
-    <div class="num">${online}<small>${T.onlineOf(devices.length)}</small></div>
-    <div class="sub">${state.data.demo ? T.demo : stale ? `<span class="stale">${T.stale(ago(generated))}</span>` : T.scanned(ago(generated) || T.justNow)}</div>
+  const off = devices.filter(x => !x.online);
+  const down = all.filter(s => s.up === false).length;
+  const pages = [
+    `<div class="num">${online}<small>${T.onlineOf(devices.length)}</small></div>
+     <div class="sub">${state.data.demo ? T.demo : stale ? `<span class="stale">${T.stale(ago(generated))}</span>` : T.scanned(ago(generated) || T.justNow)}</div>`,
+    off.length
+      ? `<div class="big">${T.offline} ${off.length}</div>
+         <ul>${off.slice(0, 3).map(x => `<li>${esc(short(x))}<span>${esc(ago(x.lastSeen))}</span></li>`).join('')}
+         ${off.length > 3 ? `<li>${T.more(off.length - 3)}</li>` : ''}</ul>`
+      : `<div class="num">${online}</div><div class="sub">${T.allOnline(online)}</div>`,
+    `<div class="num">${all.length}<small>${T.svcUnit}</small></div><div class="sub">${down ? T.nDown(down) : T.allUp}</div>`,
+  ];
+  ovPage %= pages.length;
+  return `<section class="tile w ov live" aria-label="${T.overview}">
+    <div class="faces" style="transform:translateY(${-ovPage * 100}%)">${pages.map((p, i) => `<div class="face pg" style="top:${i * 100}%">${p}</div>`).join('')}</div>
     <span class="lbl">${esc(tailnet)}</span>
   </section>`;
 }
@@ -459,7 +494,7 @@ function renderApps() {
     if (k !== last) { html += `<h3>${k}</h3>`; last = k; }
     html += `<a href="${esc(it.url)}" data-app="${esc(it.url)}"><span>${it.icon}</span><span>${esc(it.name)}${it.sub ? `<small>${esc(it.sub)}</small>` : ''}</span></a>`;
   }
-  $('apps').innerHTML = html;
+  $('apps-list').innerHTML = html;
 }
 
 // 应用列表走浏览器历史，手机上的返回手势能关掉它
@@ -471,6 +506,41 @@ function openApps(open) {
 }
 addEventListener('popstate', () => $('apps').classList.remove('open'));
 
+// 手机：开始屏幕左滑进入应用列表、列表右滑返回，面板跟着手指走
+(() => {
+  const apps = $('apps');
+  let x0, y0, t0, dx, axis = 'none';
+  const release = () => { apps.style.transform = apps.style.transition = apps.style.visibility = ''; };
+  addEventListener('touchstart', e => {
+    const t = e.touches[0];
+    // 屏幕左缘留给浏览器自己的返回手势
+    axis = !phone.matches || e.touches.length > 1 || t.clientX < 24 ? 'none' : null;
+    x0 = t.clientX; y0 = t.clientY; t0 = e.timeStamp; dx = 0;
+  }, { passive: true });
+  addEventListener('touchmove', e => {
+    if (axis === 'none') return;
+    const mx = e.touches[0].clientX - x0, my = e.touches[0].clientY - y0;
+    if (!axis) {
+      if (Math.hypot(mx, my) < 10) return;
+      axis = Math.abs(mx) > Math.abs(my) * 1.5 ? 'x' : 'none';
+      if (axis === 'none') return;
+    }
+    const open = apps.classList.contains('open');
+    dx = open ? Math.max(0, mx) : Math.min(0, mx);
+    apps.style.transition = 'none';
+    apps.style.visibility = 'visible';
+    apps.style.transform = `translateX(${open ? dx : innerWidth + dx}px)`;
+  }, { passive: true });
+  addEventListener('touchend', e => {
+    if (axis !== 'x') return;
+    axis = 'none';
+    const flick = Math.abs(dx) > 30 && Math.abs(dx) / (e.timeStamp - t0) > 0.5;
+    release();   // 去掉内联位置，由 .apps 的过渡从手指位置滑到终点
+    if (Math.abs(dx) > innerWidth * 0.3 || flick) openApps(!apps.classList.contains('open'));
+  });
+  addEventListener('touchcancel', () => { axis = 'none'; release(); });
+})();
+
 // ── 动态磁贴：随机挑一块带背面的磁贴向上滑出，几秒后滑回 ──
 function livePeek() {
   if (document.hidden || matchMedia('(prefers-reduced-motion: reduce)').matches) return;
@@ -479,6 +549,14 @@ function livePeek() {
   const t = tiles[Math.floor(Math.random() * tiles.length)];
   t.classList.add('peek');
   setTimeout(() => t.classList.remove('peek'), 3500 + Math.random() * 1500);
+}
+
+// 总览磁贴每隔几秒翻到下一页：在线数 → 离线设备 → 服务数
+function liveOverview() {
+  const f = document.querySelector('.ov.live .faces');
+  if (!f || document.hidden || matchMedia('(prefers-reduced-motion: reduce)').matches) return;
+  ovPage = (ovPage + 1) % f.children.length;
+  f.style.transform = `translateY(${-ovPage * 100}%)`;
 }
 
 // ── 按压倾斜：磁贴朝按下的位置倾斜，松开回正 ──
@@ -532,6 +610,7 @@ function select(i) {
 
 document.addEventListener('click', e => {
   if (e.target.closest('#to-apps')) { openApps(true); return; }
+  if (e.target.closest('#to-start')) { openApps(false); return; }
   const app = e.target.closest('[data-app]');
   if (app && !e.metaKey && !e.ctrlKey && e.button === 0) { e.preventDefault(); go(app.dataset.app, false); return; }
   if (e.target.closest('#more')) { state.showOffline = !state.showOffline; refresh(); return; }
@@ -568,6 +647,7 @@ function load() {
       render();
       setInterval(() => { state.animate = false; render(); }, 60000);   // 刷新「扫描于」时间
       setInterval(livePeek, 2600);
+      setInterval(liveOverview, 4500);
     })
     .catch(() => {
       $('main').removeAttribute('aria-busy');

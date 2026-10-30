@@ -2,6 +2,12 @@
 
 All notable changes to this project. Versions follow [Semantic Versioning](https://semver.org).
 
+## [Unreleased]
+
+### Added
+- Phone: swipe left on the Start screen for the A–Z list, swipe right (or the new back button) to return; the panel follows your finger
+- The overview tile is now a live tile that cycles through online devices, offline devices and service reachability
+
 ## [0.3.0] — 2026-10-29
 
 ### Added
