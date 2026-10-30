@@ -11,6 +11,8 @@ All notable changes to this project. Versions follow [Semantic Versioning](https
 ### Changed
 - Phone: all tiles use one accent color like Windows Phone (devices stay grey), and later tiles no longer fill gaps in the device rows
 - Letter tiles skip leading punctuation
+- `index.html` is served with `no-store`, so Safari always loads the new page
+- Filtering by device no longer goes into the address (`?at=`); a reload always returns to the Start screen
 
 ## [0.4.0] — 2026-10-30
 

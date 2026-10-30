@@ -651,17 +651,14 @@ function tick() {
   $('clock').textContent = now.toLocaleTimeString(undefined, { hour: '2-digit', minute: '2-digit', hour12: false });
 }
 
-function saveState() {
-  const qs = state.device ? '?at=' + encodeURIComponent(state.device) : '';
-  history.replaceState(null, '', location.pathname + qs + location.hash);
-}
-
+// 设备筛选只在当前页面有效，不写进地址：刷新或重新打开总是回到开始屏幕。
+// 旧版写进地址的 ?at= 在这里去掉
 function loadState() {
-  const at = new URLSearchParams(location.search).get('at');
-  state.device = at && deviceOf(at) ? at : null;
+  const url = new URL(location.href);
+  if (url.searchParams.has('at')) { url.searchParams.delete('at'); history.replaceState(history.state, '', url); }
 }
 
-function refresh() { state.animate = false; render(); saveState(); }
+function refresh() { state.animate = false; render(); }
 
 function toast(msg) {
   const el = $('toast'); el.textContent = msg; el.classList.add('show');
