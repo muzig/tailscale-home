@@ -117,8 +117,17 @@ def opener():
     return urllib.request.build_opener(urllib.request.ProxyHandler({}), urllib.request.HTTPSHandler(context=ctx))
 
 
+def frameable(head):
+    """响应头是否允许别的页面用 iframe 嵌入（双屏和手机外框模式在屏幕里打开服务时用）。"""
+    h = head.lower()
+    if re.search(r"^x-frame-options:\s*(deny|sameorigin)", h, re.M):
+        return False
+    m = re.search(r"^content-security-policy:.*?frame-ancestors([^;\r\n]*)", h, re.M)
+    return not m or "*" in m.group(1)
+
+
 def reachable(url, ips):
-    """服务返回任何 HTTP 响应（含 4xx/5xx）即算可达。
+    """返回 (可达, 可内嵌)。服务返回任何 HTTP 响应（含 4xx/5xx）即算可达。
 
     不走 DNS：本机若有 Clash 之类的 fake-ip，*.ts.net 会被解析成 198.18.x。
     直接连设备的 Tailscale IP，https 用域名做 SNI（tailscale serve 按 SNI 分发）。
@@ -136,9 +145,17 @@ def reachable(url, ips):
                 sock = ctx.wrap_socket(sock, server_hostname=u.hostname)
             sock.settimeout(4)
             sock.sendall(f"HEAD {u.path or '/'} HTTP/1.1\r\nHost: {u.netloc}\r\nConnection: close\r\n\r\n".encode())
-            return sock.recv(5) == b"HTTP/"
+            head = b""
+            while b"\r\n\r\n" not in head and len(head) < 32768:
+                chunk = sock.recv(4096)
+                if not chunk:
+                    break
+                head += chunk
+            if not head.startswith(b"HTTP/"):
+                return False, True
+            return True, frameable(head.decode("latin-1"))
     except OSError:
-        return False
+        return False, True
 
 
 def fetch_title(url):
@@ -262,8 +279,10 @@ def main():
     ips = {d["dns"]: d["ip"] for d in devices if d["dns"] and d["ip"]}
     check = [s for s in services if s.get("device") in online]
     with cf.ThreadPoolExecutor(max_workers=32) as ex:
-        for s, ok in zip(check, ex.map(lambda s: reachable(s["url"], ips), check)):
+        for s, (ok, embed) in zip(check, ex.map(lambda s: reachable(s["url"], ips), check)):
             s["up"] = ok
+            if ok and not embed:
+                s["embed"] = False
 
     # 动态磁贴：失败只跳过这一块，不影响整次扫描
     for s in services:

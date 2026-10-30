@@ -5,7 +5,8 @@ All notable changes to this project. Versions follow [Semantic Versioning](https
 ## [Unreleased]
 
 ### Added
-- Pick how to show the page on a computer, from the menu next to the clock or `?device=`: Auto, Phone (phone-sized) or Dual screen (Surface Duo-style, Start on the left and the A–Z list on the right); remembered per browser
+- Pick how to show the page on a computer, from the menu next to the clock or `?device=`: Auto, Phone (a phone with a bezel) or Dual screen (a Surface Duo: Start on the left, the tapped service opens on the right); remembered per browser
+- In Phone and Dual screen, services open inside the device screen; the scanner records services that refuse to be framed (`embed: false`) and those show a launch screen instead
 - `start` in `services.json`: pin only the tiles you want to the Start screen (phone and desktop); everything else stays in the A–Z list, now also on desktop behind the → button
 - `accent` in `services.json`: the phone tile color
 

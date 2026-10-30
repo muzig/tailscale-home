@@ -167,21 +167,50 @@
   .tile.turn { animation: turnstile .55s var(--metro) backwards; }
   @keyframes turnstile { from { opacity: 0; transform: perspective(900px) rotateY(-80deg); } }
 
-  /* ── 按什么设备显示：电脑上可选（状态栏的下拉框或 ?device=）。auto 按窗口宽度；
-        phone 按手机屏幕大小居中；duo 像 Surface Duo，左屏开始屏幕、右屏全部服务，中间是转轴。
-        以后加 tablet 等尺寸时在这里加一种 data-layout ── */
+  /* ── 按什么设备显示：电脑上可选（状态栏的下拉框或 ?device=）。auto 按窗口宽度铺开；
+        phone 模拟一台真手机；duo 模拟 Surface Duo：左屏开始屏幕，右屏是全部服务或打开的服务。
+        phone/duo 里点磁贴在机身屏幕里打开服务（能内嵌的话）。以后加 tablet 等尺寸时在这里加一种 data-layout ── */
+  .device, .screen2 { display: contents; }
+  .viewer { display: none; }
+  .viewer-top { display: flex; align-items: center; gap: 12px; padding: 10px 12px; background: #000; font: 600 13px/1 var(--font);
+                letter-spacing: .06em; text-transform: uppercase; }
+  .viewer-top span { flex: 1; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+  .viewer-top button, .viewer-top a { display: grid; place-items: center; width: 36px; height: 36px; flex: none;
+                                      border: 2px solid var(--fg); border-radius: 50%; }
+  .viewer-top svg { width: 16px; height: 16px; fill: none; stroke: currentColor; stroke-width: 2; }
+  .viewer-body { flex: 1; min-height: 0; }
+  .viewer-body iframe { width: 100%; height: 100%; border: 0; background: #fff; }
+  /* 不能内嵌时的启动页：像 WP 打开应用时的启动画面 */
+  .splash { height: 100%; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 14px;
+            padding: 24px; text-align: center; background: var(--accent); }
+  .splash .glyph { position: static; width: 96px; height: 96px; padding: 0; }
+  .splash .glyph svg { width: 100%; height: 100%; }
+  .splash h2 { margin: 0; font: 300 30px/1.1 var(--font); }
+  .splash p { margin: 0; font-size: 13px; opacity: .85; max-width: 280px; }
+  .splash a { margin-top: 8px; padding: 8px 18px; border: 2px solid #fff; font-weight: 600; }
+
   @media (min-width: 641px) {
     #device { display: inline-block; }
-    body[data-layout="phone"] .wrap { --cols: 4; --u: 86px; }
+    /* 机身：黑色边框、圆角，屏幕内单独滚动 */
+    body[data-layout="phone"], body[data-layout="duo"] { background: #1b1b1d; }
+    body[data-layout="phone"] .device { display: block; position: relative; overflow: hidden;
+      width: calc(4 * 86px + 3 * var(--g) + 32px + 24px); height: min(880px, calc(100vh - 40px)); margin: 20px auto;
+      border: 12px solid #000; border-radius: 44px; box-shadow: 0 0 0 2px #3a3a3c, 0 20px 60px #0008; background: #000; }
+    body[data-layout="phone"] .wrap { --cols: 4; --u: 86px; height: 100%; overflow-y: auto; scrollbar-width: none; }
+    body[data-layout="phone"] .apps { position: absolute; }
+    body[data-layout="phone"] .viewer.open { display: flex; flex-direction: column; position: absolute; inset: 0; z-index: 4; background: #000; }
   }
   @media (min-width: 960px) {
-    body[data-layout="duo"] { display: flex; justify-content: center; align-items: flex-start; }
-    body[data-layout="duo"] .wrap { --cols: 4; --u: 96px; margin: 0; flex: none; }
+    body[data-layout="duo"] .device { display: flex; justify-content: center; gap: 14px; margin: 20px auto;
+      height: min(880px, calc(100vh - 40px)); }
+    body[data-layout="duo"] .wrap, body[data-layout="duo"] .screen2 { flex: none; position: relative; overflow: hidden;
+      width: calc(4 * 96px + 3 * var(--g) + 32px + 24px); height: 100%; margin: 0;
+      border: 12px solid #000; border-radius: 36px; box-shadow: 0 0 0 2px #3a3a3c, 0 20px 60px #0008; background: #000; }
+    body[data-layout="duo"] .wrap { --cols: 4; --u: 96px; overflow-y: auto; scrollbar-width: none; }
+    body[data-layout="duo"] .screen2 { display: block; }
     body[data-layout="duo"] .to-apps, body[data-layout="duo"] #to-start { display: none; }
-    body[data-layout="duo"] .apps { position: sticky; top: 0; inset: auto; flex: none; height: 100vh;
-      width: calc(4 * 96px + 3 * var(--g) + 32px); padding: 0 16px 48px;
-      transform: none; visibility: visible; transition: none; border-left: 14px solid #161616; }
-    body[data-layout="duo"] .apps-top { margin: 0 -16px; }
+    body[data-layout="duo"] .apps { position: absolute; inset: 0; transform: none; visibility: visible; transition: none; padding: 0 16px 48px; }
+    body[data-layout="duo"] .viewer.open { display: flex; flex-direction: column; position: absolute; inset: 0; z-index: 4; background: #000; }
   }
 
   @media (prefers-reduced-motion: reduce) {
@@ -190,6 +219,7 @@
 </style>
 </head>
 <body>
+<div class="device">
 <div class="wrap">
   <div class="tray"><span id="tray-l"></span><span class="tray-r"><select id="device"><option value="auto"></option><option value="phone"></option><option value="duo"></option></select><button id="lang"></button><b id="clock"></b></span></div>
   <main id="main" class="groups" aria-busy="true">
@@ -197,10 +227,21 @@
   </main>
   <button class="to-apps" id="to-apps"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 12h15M13 6l6 6-6 6"/></svg></button>
 </div>
+<div class="screen2">
 <nav class="apps" id="apps">
   <div class="apps-top"><button id="to-start"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M20 12H5M11 6l-6 6 6 6"/></svg></button><span id="apps-title"></span></div>
   <div id="apps-list"></div>
 </nav>
+<section class="viewer" id="viewer">
+  <div class="viewer-top">
+    <button id="viewer-close"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M20 12H5M11 6l-6 6 6 6"/></svg></button>
+    <span id="viewer-title"></span>
+    <a id="viewer-ext" target="_blank" rel="noopener"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M14 4h6v6M20 4l-9 9M18 14v6H4V6h6"/></svg></a>
+  </div>
+  <div class="viewer-body" id="viewer-body"></div>
+</section>
+</div>
+</div>
 <div class="toast" id="toast" role="status"></div>
 
 <script>
@@ -224,7 +265,9 @@ const I18N = {
     copied: v => `Copied ${v}`, sep: ', ',
     loadFail: '<strong>Can’t load the service list</strong>data.json failed to load: the scan may not have run yet, or the network is down.',
     retry: 'Reload', demo: 'Demo · fake tailnet',
-    allApps: 'All services', backToStart: 'Back to Start', device: 'Show as', devices_: { auto: 'Auto', phone: 'Phone', duo: 'Dual screen' }, other_lang: '中文', switchTo: '切换到中文',
+    allApps: 'All services', backToStart: 'Back to Start', device: 'Show as', devices_: { auto: 'Auto', phone: 'Phone', duo: 'Dual screen' },
+    openTab: 'Open in a new tab', noFrame: 'This service doesn’t allow being shown inside another page.',
+    mixed: 'This http service can’t be shown inside an https page. Open the home page at its http address to see it here.', other_lang: '中文', switchTo: '切换到中文',
     allOnline: n => `All ${n} devices online`, more: n => `+${n} more`,
     svcUnit: 'services', nDown: n => `${n} unreachable`, allUp: 'All reachable',
   },
@@ -239,7 +282,9 @@ const I18N = {
     copied: v => `已复制 ${v}`, sep: '，',
     loadFail: '<strong>暂时读不到服务列表</strong>data.json 加载失败：可能是扫描任务还没跑过，或网络中断。',
     retry: '重新加载', demo: '演示 · 虚构数据',
-    allApps: '全部服务', backToStart: '返回开始屏幕', device: '显示为', devices_: { auto: '自动', phone: '手机', duo: '双屏' }, other_lang: 'EN', switchTo: 'Switch to English',
+    allApps: '全部服务', backToStart: '返回开始屏幕', device: '显示为', devices_: { auto: '自动', phone: '手机', duo: '双屏' },
+    openTab: '在新标签页打开', noFrame: '这个服务不允许在别的页面里显示。',
+    mixed: '这是 http 服务，https 页面里无法显示。用主页的 http 地址打开就能在这里看到。', other_lang: 'EN', switchTo: 'Switch to English',
     allOnline: n => `${n} 台设备全部在线`, more: n => `还有 ${n} 台`,
     svcUnit: '个服务', nDown: n => `${n} 个不可达`, allUp: '全部可达',
   },
@@ -261,6 +306,8 @@ function setLang(dataLang) {
   $('apps').setAttribute('aria-label', T.allApps);
   $('apps-title').textContent = T.allApps;
   $('to-start').setAttribute('aria-label', T.backToStart);
+  $('viewer-close').setAttribute('aria-label', T.backToStart);
+  $('viewer-ext').setAttribute('aria-label', T.openTab);
 }
 setLang();
 // 按什么设备显示：?device= > 本浏览器记住的选择 > auto；窄屏上 CSS 不生效，始终是手机
@@ -280,6 +327,7 @@ $('device').addEventListener('change', e => {
   const url = new URL(location.href);
   if (url.searchParams.has('device')) { url.searchParams.delete('device'); history.replaceState(history.state, '', url); }
   setDevice(e.target.value);
+  closeViewer();
   if (state.data) turnstile($('main'));
 });
 
@@ -582,7 +630,10 @@ function openApps(open) {
   if (open) { $('apps').scrollTop = 0; history.pushState({ apps: 1 }, ''); }
   else if (history.state?.apps) history.back();
 }
-addEventListener('popstate', () => $('apps').classList.remove('open'));
+addEventListener('popstate', () => {
+  $('apps').classList.remove('open');
+  if (!history.state?.viewer) { $('viewer').classList.remove('open'); $('viewer-body').innerHTML = ''; }
+});
 
 // 手机：开始屏幕左滑进入应用列表、列表右滑返回，面板跟着手指走
 (() => {
@@ -672,7 +723,35 @@ function toast(msg) {
 function go(url, newTab) {
   usage[url] = (usage[url] || 0) + 1;
   try { localStorage.setItem('tsh-usage', JSON.stringify(usage)); } catch {}
-  newTab ? window.open(url, '_blank') : (location.href = url);
+  if (newTab) window.open(url, '_blank');
+  else if (framed()) openViewer(url);
+  else location.href = url;
+}
+
+// 手机外框和双屏模式：服务在机身屏幕里打开，像真手机启动应用
+const FRAMED = { phone: '(min-width: 641px)', duo: '(min-width: 960px)' };   // 与 CSS 断点一致
+const framed = () => { const q = FRAMED[document.body.dataset.layout]; return !!q && matchMedia(q).matches; };
+
+function openViewer(url) {
+  const { services: all, devices, bookmarks = [] } = state.data;
+  const svc = all.find(s => resolveUrl(s, devices) === url);
+  const item = svc || bookmarks.find(b => b.url === url) || { name: url };
+  // https 页面里浏览器不加载 http 内容；X-Frame-Options 等由 scan.py 检查后记在 embed 里
+  const mixed = location.protocol === 'https:' && new URL(url, location.href).protocol === 'http:';
+  const why = mixed ? T.mixed : item.embed === false ? T.noFrame : '';
+  $('viewer-title').textContent = item.name;
+  $('viewer-ext').href = url;
+  $('viewer-body').innerHTML = why
+    ? `<div class="splash"><div class="glyph">${svc ? svg(glyphOf(svc)) : `<span class="ch">${esc(initial(item.name))}</span>`}</div>
+         <h2>${esc(item.name)}</h2><p>${why}</p><a href="${esc(url)}" target="_blank" rel="noopener">${T.openTab}</a></div>`
+    : `<iframe src="${esc(url)}" title="${esc(item.name)}" referrerpolicy="no-referrer"></iframe>`;
+  if (!$('viewer').classList.contains('open')) history.pushState({ viewer: 1 }, '');
+  $('viewer').classList.add('open');
+}
+function closeViewer() {
+  if (!$('viewer').classList.contains('open')) return;
+  if (history.state?.viewer) history.back();
+  else { $('viewer').classList.remove('open'); $('viewer-body').innerHTML = ''; }
 }
 
 function select(i) {
@@ -688,6 +767,7 @@ function select(i) {
 document.addEventListener('click', e => {
   if (e.target.closest('#to-apps')) { openApps(true); return; }
   if (e.target.closest('#to-start')) { openApps(false); return; }
+  if (e.target.closest('#viewer-close')) { closeViewer(); return; }
   if (e.target.closest('#lang')) { switchLang(); return; }
   const app = e.target.closest('[data-app]');
   if (app && !e.metaKey && !e.ctrlKey && e.button === 0) { e.preventDefault(); go(app.dataset.app, false); return; }
@@ -702,6 +782,7 @@ document.addEventListener('click', e => {
 
 document.addEventListener('keydown', e => {
   if (e.target.closest('select')) return;   // 设备下拉框自己处理方向键
+  if (e.key === 'Escape' && $('viewer').classList.contains('open')) { closeViewer(); return; }
   if (e.key === 'Escape' && $('apps').classList.contains('open')) { openApps(false); return; }
   if (e.key === 'Escape') { state.device = null; state.sel = 0; refresh(); return; }
   const move = { ArrowDown: 1, ArrowUp: -1, ArrowRight: 1, ArrowLeft: -1 }[e.key];
