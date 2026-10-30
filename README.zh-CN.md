@@ -121,7 +121,7 @@ tailscale serve --bg --set-path / http://127.0.0.1:4183
 
 ## 私人页面
 
-把任意 `.html` 放进 `data.json` 旁边的 `notes/` 目录（Docker 部署里就是 `var/notes/`），下次扫描后会出现在主页的 **Notes** 分组里（新的在前，名字取 `<title>`），nginx 在 `/notes/` 下提供访问。适合放要在手机上复制的草稿，内容只在你的服务器和 tailnet 里。
+把任意 `.html` 放进 `data.json` 旁边的 `notes/` 目录（Docker 部署里就是 `var/notes/`），下次扫描后会出现在主页的 **Notes** 分组里（新的在前，名字取 `<title>`），nginx 在 `/notes/` 下提供访问。在 `services.json` 里设 `"notes_group"` 为某个标签，就会并进那个分组。适合放要在手机上复制的草稿，内容只在你的服务器和 tailnet 里。
 
 ## 说明
 

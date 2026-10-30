@@ -463,25 +463,29 @@ function render() {
   let g = 0;
 
   let html = `<section class="group" style="--i:${g++}"><h2>${T.devices}</h2><div class="grid" style="--c:var(--cobalt)">${overviewTile()}${deviceTiles()}</div></section>`;
-  if (notes.length) {
+  // notes 默认自成一组紧跟设备；services.json 的 notes_group 指向某个标签时并进那一组
+  const noteTile = b => {
+    const i = n++;
+    return `<a class="tile m${state.engaged && i === state.sel ? ' sel' : ''}" data-nav data-i="${i}" href="${esc(b.url)}" data-url="${esc(b.url)}"
+               title="${esc(b.name)}" aria-label="${esc(b.name)}" style="--c:var(--mauve)">
+      <div class="faces">
+        <div class="face"><div class="glyph">${svg('doc')}</div></div>
+        <div class="face back"><p>${esc(b.name)}</p><span>${esc(b.note || '')}</span></div>
+      </div>
+      <span class="lbl">${esc(b.name)}</span></a>`;
+  };
+  const host = notes.length && groups.find(([name]) => name === notes[0].group);
+  if (notes.length && !host) {
     html += `<section class="group" style="--i:${g++}"><h2>${groupName(notes[0].group)}<small>${notes.length}</small></h2>
-      <div class="grid" style="--c:var(--mauve)">${notes.map(b => {
-        const i = n++;
-        return `<a class="tile m${state.engaged && i === state.sel ? ' sel' : ''}" data-nav data-i="${i}" href="${esc(b.url)}" data-url="${esc(b.url)}"
-                   title="${esc(b.name)}" aria-label="${esc(b.name)}">
-          <div class="faces">
-            <div class="face"><div class="glyph">${svg('doc')}</div></div>
-            <div class="face back"><p>${esc(b.name)}</p><span>${esc(b.note || '')}</span></div>
-          </div>
-          <span class="lbl">${esc(b.name)}</span></a>`;
-      }).join('')}</div></section>`;
+      <div class="grid">${notes.map(noteTile).join('')}</div></section>`;
   }
   if (state.device && !list.length) {
     html += `<div class="note">${T.noSvc}</div>`;
   }
   groups.forEach(([name, items], gi) => {
-    html += `<section class="group" style="--i:${g++}"><h2>${groupName(name)}<small>${items.length}</small></h2>
-      <div class="grid" style="--c:var(--${PALETTE[gi % PALETTE.length]})">${items.map(s => svcTile(s, s === top ? 'w' : 'm')).join('')}</div></section>`;
+    const extra = host && host[0] === name ? notes : [];
+    html += `<section class="group" style="--i:${g++}"><h2>${groupName(name)}<small>${items.length + extra.length}</small></h2>
+      <div class="grid" style="--c:var(--${PALETTE[gi % PALETTE.length]})">${items.map(s => svcTile(s, s === top ? 'w' : 'm')).join('')}${extra.map(noteTile).join('')}</div></section>`;
   });
   marks.forEach(([name, items], mi) => {
     html += `<section class="group" style="--i:${g++}"><h2>${groupName(name)}<small>${items.length}</small></h2>

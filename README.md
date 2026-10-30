@@ -138,7 +138,7 @@ With only `device` + `port`/`path`/`scheme`, the address is built from the devic
 
 ## Private notes
 
-Drop any `.html` file into `notes/` next to `data.json` (`var/notes/` in the Docker setups). The next scan lists it in a **Notes** group, newest first, named by its `<title>`, and nginx serves it at `/notes/`. Handy for drafts you want to copy on your phone — they stay on your server and inside your tailnet.
+Drop any `.html` file into `notes/` next to `data.json` (`var/notes/` in the Docker setups). The next scan lists it in a **Notes** group, newest first, named by its `<title>`, and nginx serves it at `/notes/`. Set `"notes_group"` in `services.json` to one of your tags to put them in that group instead. Handy for drafts you want to copy on your phone — they stay on your server and inside your tailnet.
 
 ## Notes
 
