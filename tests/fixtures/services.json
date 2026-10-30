@@ -1,11 +1,6 @@
 {
   "title": "Test Home",
   "lang": "en",
-  "labels": {
-    "zh": {
-      "media": "影音"
-    }
-  },
   "services": [
     {
       "name": "Jellyfin",

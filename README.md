@@ -35,9 +35,9 @@ A start page for your [Tailscale](https://tailscale.com) network — every devic
 - Discovers services automatically from `tailscale serve`, plus optional port probing (`--probe`) on online peers
 - Hand-written services and bookmarks in `services.json`; de-duplicated against discovered ones
 - Real reachability check done by the scanner (not the browser), shown as tile status
-- Keyboard first: `↑↓` select, `↵` open, `⌘↵` open in new tab, `Esc` clear filter; filter by tag or device
+- Keyboard: `↑↓` select, `↵` open, `⌘↵` open in new tab, `Esc` clear the device filter; tap a device to see only its services
 - Most-clicked services float to the top (stored in your browser only)
-- On a phone it turns into a Windows Phone 8.1 Start screen: black background, one accent color, turnstile animation, and an A–Z list behind the → button. Pin just the tiles you want with `start` in `services.json` (phone and desktop); the rest live in the A–Z list
+- A Windows Phone 8.1 Start screen on phone and desktop alike: black background, one accent color, turnstile animation, live tiles, and an A–Z list behind the → button (swipe left on a phone). Desktop gets 6 columns. Pin just the tiles you want with `start` in `services.json`; the rest live in the A–Z list
 - English and Chinese UI: English by default, switch with the button next to the clock (remembered per browser), or set it with `?lang=zh` / `"lang"` in `services.json`
 - One static HTML file + one stdlib-only Python script. No build step, no framework, no database
 
@@ -134,7 +134,7 @@ Any web app can use the same loop — this repo is a small, complete example of 
 { "name": "My App", "url": "https://mac-mini.example-tailnet.ts.net/app/" }
 ```
 
-With only `device` + `port`/`path`/`scheme`, the address is built from the device's Tailscale IP (MagicDNS name for https, because `tailscale serve` certificates are bound to it). Hand-written entries win over discovered ones with the same URL. See [`services.example.json`](services.example.json) for `hide`, `bookmarks` and `labels` (group names in Chinese when the viewer switches language).
+With only `device` + `port`/`path`/`scheme`, the address is built from the device's Tailscale IP (MagicDNS name for https, because `tailscale serve` certificates are bound to it). Hand-written entries win over discovered ones with the same URL. See [`services.example.json`](services.example.json) for `hide`, `bookmarks`, `start` and `accent`.
 
 ## Live tiles
 

@@ -4,25 +4,77 @@
   "_comment_notes_group": "Optional: put pages from notes/ into this tag's group instead of a separate Notes group.",
   "notes_group": "",
   "_comment_live": "Optional per service: `live` fetches a JSON URL on every scan and shows the lines in `show` on the tile back. `{path.to.value}` or `{value:.0f}` (Python format) pick values; `root` picks a sub-object first; $VARS in url/headers come from the environment.",
-  "_comment_start": "Optional: pin only these tiles to the Start screen (phone and desktop), in this order (service, bookmark or note names; {\"name\": \"Jellyfin\", \"size\": \"w\"} for s/m/w). Everything else stays in the A–Z list. Leave out to show everything. `accent` sets the phone tile color: cobalt, emerald, crimson, teal, magenta, orange, indigo, brown, mauve, violet, olive.",
-  "start": ["Gitea", { "name": "Jellyfin", "size": "w" }, "Home Assistant"],
+  "_comment_start": "Optional: pin only these tiles to the Start screen, in this order (service, bookmark or note names; {\"name\": \"Jellyfin\", \"size\": \"w\"} for s/m/w). Everything else stays in the A–Z list. Leave out to show everything. `accent` sets the phone tile color: cobalt, emerald, crimson, teal, magenta, orange, indigo, brown, mauve, violet, olive.",
+  "start": [
+    "Gitea",
+    {
+      "name": "Jellyfin",
+      "size": "w"
+    },
+    "Home Assistant"
+  ],
   "accent": "cobalt",
-  "_comment_labels": "Optional: show group names (service tags, bookmark groups, Notes) in another language when the viewer switches to it.",
-  "labels": { "zh": { "dev": "开发", "media": "影音", "home": "家居", "Notes": "笔记" } },
   "_comment": "Copy to services.json (git-ignored) and edit. `device` is the MagicDNS short name. Give a full `url`, or just `port`/`path`/`scheme` and scan.py builds the address from the device's Tailscale IP (MagicDNS name for https). `lang`: \"en\" or \"zh\"; empty means English unless the viewer switches. Icons are picked from the name; set `glyph` to override: ledger, coin, book, reader, photo, cloud, doc, pen, git, code, car, chart, db, server, spark, home, globe.",
   "services": [
-    { "name": "Gitea", "device": "mac-mini", "port": 3000, "icon": "🍵", "tags": ["dev"], "note": "Git hosting + Actions CI" },
-    { "name": "Jellyfin", "device": "nas", "port": 8096, "icon": "🎬", "tags": ["media"] },
-    { "name": "Home Assistant", "device": "raspberrypi", "port": 8123, "icon": "🏠", "tags": ["home"],
-      "live": { "url": "http://raspberrypi:8123/api/states/sensor.living_room_temperature",
-                "headers": { "Authorization": "Bearer $HA_TOKEN" },
-                "show": ["{state}°C", "living room"] } },
-    { "name": "My App", "device": "mac-mini", "url": "https://mac-mini.example-tailnet.ts.net/app/", "icon": "🚀", "tags": ["dev"] }
+    {
+      "name": "Gitea",
+      "device": "mac-mini",
+      "port": 3000,
+      "icon": "🍵",
+      "tags": [
+        "dev"
+      ],
+      "note": "Git hosting + Actions CI"
+    },
+    {
+      "name": "Jellyfin",
+      "device": "nas",
+      "port": 8096,
+      "icon": "🎬",
+      "tags": [
+        "media"
+      ]
+    },
+    {
+      "name": "Home Assistant",
+      "device": "raspberrypi",
+      "port": 8123,
+      "icon": "🏠",
+      "tags": [
+        "home"
+      ],
+      "live": {
+        "url": "http://raspberrypi:8123/api/states/sensor.living_room_temperature",
+        "headers": {
+          "Authorization": "Bearer $HA_TOKEN"
+        },
+        "show": [
+          "{state}°C",
+          "living room"
+        ]
+      }
+    },
+    {
+      "name": "My App",
+      "device": "mac-mini",
+      "url": "https://mac-mini.example-tailnet.ts.net/app/",
+      "icon": "🚀",
+      "tags": [
+        "dev"
+      ]
+    }
   ],
   "_comment_hide": "URLs found by `tailscale serve` or --probe that you don't want listed.",
-  "hide": ["http://100.64.0.10:9000/"],
+  "hide": [
+    "http://100.64.0.10:9000/"
+  ],
   "_comment_bookmarks": "Links outside the tailnet, shown in their own section.",
   "bookmarks": [
-    { "name": "Tailscale admin", "url": "https://login.tailscale.com/admin/machines", "group": "Tools", "note": "Machines, ACLs, DNS" }
+    {
+      "name": "Tailscale admin",
+      "url": "https://login.tailscale.com/admin/machines",
+      "group": "Tools",
+      "note": "Machines, ACLs, DNS"
+    }
   ]
 }

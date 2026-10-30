@@ -19,20 +19,18 @@
     --cobalt: #0050ef; --emerald: #008a00; --crimson: #a20025; --teal: #00827f;
     --magenta: #d80073; --orange: #c25100; --indigo: #6a00ff; --brown: #825a2c;
     --mauve: #76608a; --violet: #9a00e6; --olive: #5a7052; --steel: #56687a;
-    --accent: var(--cobalt);   /* 手机开始屏幕的统一主题色，services.json 的 accent 可改 */
+    --accent: var(--cobalt);   /* 所有磁贴的统一主题色，services.json 的 accent 可改 */
 
-    --bg: oklch(0.14 0 0);
-    --fg: oklch(0.97 0 0);
-    --fg-2: oklch(0.72 0 0);
+    /* 电脑和手机同一套 Windows Phone 8.1 开始屏幕：黑底白字 */
+    --bg: #000;
+    --fg: #fff;
+    --fg-2: oklch(0.7 0 0);
     --on-tile: oklch(0.99 0 0);
     --font: "Segoe UI", "Segoe UI Variable Text", "Noto Sans", "PingFang SC", "Microsoft YaHei", sans-serif;
     --g: 6px;                               /* 磁贴间距 */
-    --u: 72px;                              /* 小磁贴边长 */
-    --cols: 6;
+    --u: 88px;                              /* 小磁贴边长（电脑）；手机按屏宽算 */
+    --cols: 6;                              /* 电脑上 6 列，相当于 WP 的「显示更多磁贴」 */
     --metro: cubic-bezier(0.1, 0.9, 0.2, 1);
-  }
-  @media (prefers-color-scheme: light) {
-    :root { --bg: oklch(0.985 0 0); --fg: oklch(0.16 0 0); --fg-2: oklch(0.42 0 0); }
   }
   @media (max-width: 640px) {
     /* 手机：每行 4 个单位，两块中磁贴并排，与 Windows Phone 一致 */
@@ -48,7 +46,7 @@
   a, button { touch-action: manipulation; -webkit-tap-highlight-color: transparent; }
   :focus-visible { outline: 2px solid var(--fg); outline-offset: 2px; }
 
-  .wrap { max-width: 1240px; margin: 0 auto;
+  .wrap { max-width: calc(var(--cols) * var(--u) + (var(--cols) - 1) * var(--g) + 32px); margin: 0 auto;
           padding: max(env(safe-area-inset-top), 10px) max(16px, env(safe-area-inset-right)) 48px max(16px, env(safe-area-inset-left)); }
 
   /* 状态栏 */
@@ -58,14 +56,6 @@
   #lang { font-size: 12px; color: var(--fg-2); padding: 2px 0; }
   @media (hover: hover) { #lang:hover { color: var(--fg); } }
 
-  h1 { margin: clamp(18px, 4vw, 36px) 0 clamp(16px, 3vw, 28px); font: 300 clamp(44px, 8vw, 72px)/1 var(--font); letter-spacing: -0.01em; }
-
-  /* 分组 */
-  .groups { display: flex; flex-wrap: wrap; gap: 32px 56px; align-items: flex-start; }
-  .group { animation: enter .7s var(--metro) both; animation-delay: calc(var(--i, 0) * 70ms); }
-  @keyframes enter { from { opacity: 0; transform: translateX(40px); } }
-  .group h2 { margin: 0 0 10px; font: 300 20px/1.2 var(--font); color: var(--fg); }
-  .group h2 small { font-size: 13px; color: var(--fg-2); margin-left: 6px; }
   .grid { display: grid; grid-template-columns: repeat(var(--cols), var(--u)); grid-auto-rows: var(--u);
           gap: var(--g); grid-auto-flow: row dense; }
 
@@ -159,27 +149,21 @@
   .apps a .ch { font: 300 26px/1 var(--font); color: #fff; }
   .apps a small { display: block; font-size: 12px; color: var(--fg-2); }
 
-  /* ── 手机：照 Windows Phone 8.1 开始屏幕 ── */
-  @media (max-width: 640px) {
-    :root { --bg: #000; --fg: #fff; --fg-2: oklch(0.7 0 0); }
-    body { background: #000; touch-action: pan-y; }
-    .wrap { padding-top: max(env(safe-area-inset-top), 4px); }
-    .tray { position: sticky; top: 0; z-index: 2; background: #000; margin: 0 -16px; padding: 6px 16px 4px; color: var(--fg); }
-    .tray .sig { display: inline-flex; align-items: flex-end; gap: 2px; height: 12px; margin-right: 8px; vertical-align: -1px; }
-    .tray .sig i { width: 3px; background: var(--fg); opacity: .3; }
-    .tray .sig i.on { opacity: 1; }
-    h1, footer, .group h2 { display: none; }
-    /* 设备一块网格、其余磁贴一块网格，后面的小磁贴不会补进设备行；
-       和 WP 一样所有磁贴用同一个主题色（设备保持灰色） */
-    .groups { display: flex; flex-direction: column; gap: var(--g); margin-top: 12px; }
-    .group { animation: none; }
-    .grid { --c: var(--accent) !important; }
-    .note { grid-column: 1 / -1; grid-row: span 3; }
-    /* 转门动画：磁贴绕屏幕左缘翻入，origin 由脚本按位置设置 */
-    .tile.turn { animation: turnstile .55s var(--metro) backwards; }
-    @keyframes turnstile { from { opacity: 0; transform: perspective(900px) rotateY(-80deg); } }
-
-  }
+  /* ── Windows Phone 8.1 开始屏幕（电脑和手机一致）── */
+  body { background: #000; touch-action: pan-y; }
+  .wrap { padding-top: max(env(safe-area-inset-top), 4px); }
+  .tray { position: sticky; top: 0; z-index: 2; background: #000; margin: 0 -16px; padding: 6px 16px 4px; color: var(--fg); }
+  .tray .sig { display: inline-flex; align-items: flex-end; gap: 2px; height: 12px; margin-right: 8px; vertical-align: -1px; }
+  .tray .sig i { width: 3px; background: var(--fg); opacity: .3; }
+  .tray .sig i.on { opacity: 1; }
+  /* 设备一块网格、其余磁贴一块网格，后面的小磁贴不会补进设备行；
+     和 WP 一样所有磁贴用同一个主题色（设备保持灰色） */
+  .groups { display: flex; flex-direction: column; gap: var(--g); margin-top: 12px; }
+  .grid { --c: var(--accent) !important; }
+  .note { grid-column: 1 / -1; grid-row: span 3; }
+  /* 转门动画：磁贴绕屏幕左缘翻入，origin 由脚本按位置设置 */
+  .tile.turn { animation: turnstile .55s var(--metro) backwards; }
+  @keyframes turnstile { from { opacity: 0; transform: perspective(900px) rotateY(-80deg); } }
 
   @media (prefers-reduced-motion: reduce) {
     *, *::before, *::after { animation: none !important; transition: none !important; }
@@ -189,11 +173,9 @@
 <body>
 <div class="wrap">
   <div class="tray"><span id="tray-l"></span><span class="tray-r"><button id="lang"></button><b id="clock"></b></span></div>
-  <h1 id="title"></h1>
   <main id="main" class="groups" aria-busy="true">
     <div class="group"><div class="grid"><div class="tile w skel"></div><div class="tile m skel"></div></div></div>
   </main>
-  <footer id="keys"></footer>
   <button class="to-apps" id="to-apps"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 12h15M13 6l6 6-6 6"/></svg></button>
 </div>
 <nav class="apps" id="apps">
@@ -213,7 +195,7 @@ const $ = id => document.getElementById(id);
 // ── 界面文案：?lang= > 右上角切换（存在本浏览器）> data.json 的 lang > 英文 ──
 const I18N = {
   en: {
-    start: 'Start', devices: 'Devices', other: 'Other', offline: 'Offline', unreachable: 'Unreachable', online: 'Online',
+    offline: 'Offline', unreachable: 'Unreachable', online: 'Online',
     collapse: 'Hide', justNow: 'just now', min: m => `${m} min ago`, hr: h => `${h} h ago`, day: d => `${d} d ago`,
     lastSeen: t => `, last seen ${t}`, onlineOf: n => `/ ${n} online`, scanned: t => `Scanned ${t}`,
     stale: t => `No new data for ${t.replace(' ago', '')}`, back: '‹ Press Esc or tap the device again',
@@ -223,13 +205,12 @@ const I18N = {
     copied: v => `Copied ${v}`, sep: ', ',
     loadFail: '<strong>Can’t load the service list</strong>data.json failed to load: the scan may not have run yet, or the network is down.',
     retry: 'Reload', demo: 'Demo · fake tailnet',
-    allApps: 'All services', backToStart: 'Back to Start', pinned: 'Pinned', other_lang: '中文', switchTo: '切换到中文',
+    allApps: 'All services', backToStart: 'Back to Start', other_lang: '中文', switchTo: '切换到中文',
     allOnline: n => `All ${n} devices online`, more: n => `+${n} more`,
     svcUnit: 'services', nDown: n => `${n} unreachable`, allUp: 'All reachable',
-    keys: '<kbd>↑ ↓</kbd> select　<kbd>↵</kbd> open　<kbd>⌘↵</kbd> new tab　<kbd>Esc</kbd> show all　·　rescanned every 10 min',
   },
   zh: {
-    start: '开始', devices: '设备', other: '其他', offline: '离线', unreachable: '不可达', online: '在线',
+    offline: '离线', unreachable: '不可达', online: '在线',
     collapse: '收起', justNow: '刚刚', min: m => `${m} 分钟前`, hr: h => `${h} 小时前`, day: d => `${d} 天前`,
     lastSeen: t => `，最后出现于 ${t}`, onlineOf: n => `/ ${n} 台在线`, scanned: t => `扫描于 ${t}`,
     stale: t => `数据已${t.replace('前', '')}未更新`, back: '‹ 按 Esc 或再点一次设备返回',
@@ -239,10 +220,9 @@ const I18N = {
     copied: v => `已复制 ${v}`, sep: '，',
     loadFail: '<strong>暂时读不到服务列表</strong>data.json 加载失败：可能是扫描任务还没跑过，或网络中断。',
     retry: '重新加载', demo: '演示 · 虚构数据',
-    allApps: '全部服务', backToStart: '返回开始屏幕', pinned: '已固定', other_lang: 'EN', switchTo: 'Switch to English',
+    allApps: '全部服务', backToStart: '返回开始屏幕', other_lang: 'EN', switchTo: 'Switch to English',
     allOnline: n => `${n} 台设备全部在线`, more: n => `还有 ${n} 台`,
     svcUnit: '个服务', nDown: n => `${n} 个不可达`, allUp: '全部可达',
-    keys: '<kbd>↑ ↓</kbd> 选择　<kbd>↵</kbd> 打开　<kbd>⌘↵</kbd> 新标签　<kbd>Esc</kbd> 返回全部　·　每 10 分钟自动扫描',
   },
 };
 const pickLang = pref => /^zh/i.test(pref || '') ? 'zh' : pref ? 'en' : null;
@@ -253,8 +233,6 @@ function setLang(dataLang) {
   const lang = pickLang(new URLSearchParams(location.search).get('lang')) || pickLang(saved) || pickLang(dataLang) || 'en';
   T = I18N[lang];
   document.documentElement.lang = lang === 'zh' ? 'zh-CN' : 'en';
-  $('title').textContent = T.start;
-  $('keys').innerHTML = T.keys;
   $('to-apps').setAttribute('aria-label', T.allApps);
   $('lang').textContent = T.other_lang;
   $('lang').setAttribute('aria-label', T.switchTo);
@@ -272,7 +250,7 @@ function switchLang() {
   setLang(state.data?.lang);
   if (state.data) { state.animate = false; render(); }
 }
-const OTHER = '\0other';   // 未打标签的分组，显示时再翻译
+const OTHER = '\0other';   // 未打标签的服务排在最后
 // engaged：用户按过方向键之后才显示选中框
 const state = { data: null, device: null, sel: 0, animate: true, engaged: false, showOffline: false };
 const usage = (() => { try { return JSON.parse(localStorage.getItem('tsh-usage') || '{}'); } catch { return {}; } })();
@@ -396,10 +374,6 @@ function svcTile(s, size) {
   </a>`;
 }
 
-// 分组名来自 services.json 的标签和书签 group；labels 给出其他语言的显示名，如 {"zh": {"Finance": "理财"}}
-const groupName = name => name === OTHER ? T.other
-  : esc(state.data.labels?.[document.documentElement.lang.slice(0, 2)]?.[name] || name);
-
 let ovPage = 0;   // 总览磁贴当前显示第几页，重绘时保持
 
 function overviewTile() {
@@ -507,41 +481,29 @@ function render() {
   const notes = (state.data.bookmarks || []).filter(b => b.kind === 'note' && (!state.device || b.device === state.device));
   // notes 默认自成一组紧跟设备；services.json 的 notes_group 指向某个标签时并进那一组
   const host = notes.length && groups.find(([name]) => name === notes[0].group);
-  const onPhone = phone.matches;
   const pins = !state.device && Array.isArray(state.data.start) ? state.data.start : null;
-  let g = 0;
-  // 手机上不显示分组标题，各组磁贴直接连成一片
-  const section = (title, count, color, tiles) => onPhone ? tiles
-    : `<section class="group" style="--i:${g++}"><h2>${title}<small>${count}</small></h2>
-       <div class="grid" style="--c:var(--${color})">${tiles}</div></section>`;
 
-  let html = `<section class="group" style="--i:${g++}"><h2>${T.devices}</h2><div class="grid" style="--c:var(--cobalt)">${overviewTile()}${deviceTiles()}</div></section>`;
+  // 和 WP 开始屏幕一样没有分组标题：设备一块网格，其余磁贴按组的顺序连成另一块
   let rest = '';
   if (pins) {
-    const tiles = pinnedTiles(pins, list);
-    rest = tiles && section(T.pinned, pins.length, 'accent', tiles);
+    rest = pinnedTiles(pins, list);
   } else {
-    if (notes.length && !host) rest += section(groupName(notes[0].group), notes.length, 'mauve', notes.map(b => noteTile(b)).join(''));
+    if (notes.length && !host) rest += notes.map(b => noteTile(b)).join('');
     if (state.device && !list.length) rest += `<div class="note">${T.noSvc}</div>`;
-    groups.forEach(([name, items], gi) => {
+    groups.forEach(([name, items]) => {
       const extra = host && host[0] === name ? notes : [];
-      rest += section(groupName(name), items.length + extra.length, PALETTE[gi % PALETTE.length],
-        items.map(s => svcTile(s, s === top ? 'w' : 'm')).join('') + extra.map(b => noteTile(b)).join(''));
+      rest += items.map(s => svcTile(s, s === top ? 'w' : 'm')).join('') + extra.map(b => noteTile(b)).join('');
     });
-    marks.forEach(([name, items], mi) => {
-      rest += section(groupName(name), items.length, PALETTE[(groups.length + mi) % PALETTE.length], items.map(b => markTile(b)).join(''));
-    });
+    marks.forEach(([, items]) => { rest += items.map(b => markTile(b)).join(''); });
   }
-  html += onPhone ? `<section class="group"><div class="grid">${rest}</div></section>` : rest;
-  main.innerHTML = html;
+  main.innerHTML = `<section class="group"><div class="grid">${overviewTile()}${deviceTiles()}</div></section>`
+    + (rest ? `<section class="group"><div class="grid">${rest}</div></section>` : '');
   state.sel = Math.min(state.sel, Math.max(n - 1, 0));
-  if (!state.animate) main.querySelectorAll('.group').forEach(el => el.style.animation = 'none');
-  else if (onPhone) turnstile(main);
+  if (state.animate) turnstile(main);
   renderApps();
 }
 
 const phone = matchMedia('(max-width: 640px)');
-phone.addEventListener('change', () => { if (state.data) { state.animate = false; render(); } });
 
 // 先左列后右列、自上而下依次翻入，转轴都在屏幕左缘
 function turnstile(root) {

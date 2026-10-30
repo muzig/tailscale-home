@@ -9,10 +9,15 @@ All notable changes to this project. Versions follow [Semantic Versioning](https
 - `accent` in `services.json`: the phone tile color
 
 ### Changed
+- **Desktop and phone look the same:** the Windows Phone 8.1 Start screen everywhere — black, no titles or group names, one accent color. Desktop gets 6 columns, like WP's "show more tiles"
 - Phone: all tiles use one accent color like Windows Phone (devices stay grey), and later tiles no longer fill gaps in the device rows
 - Letter tiles skip leading punctuation
 - `index.html` is served with `no-store`, so Safari always loads the new page
 - Filtering by device no longer goes into the address (`?at=`); a reload always returns to the Start screen
+
+### Removed
+- `labels` in `services.json`: group names are no longer shown, so there is nothing to translate
+- The light theme
 
 ## [0.4.0] — 2026-10-30
 
