@@ -144,7 +144,8 @@ def reachable(url, ips):
                 ctx.verify_mode = ssl.CERT_NONE
                 sock = ctx.wrap_socket(sock, server_hostname=u.hostname)
             sock.settimeout(4)
-            sock.sendall(f"HEAD {u.path or '/'} HTTP/1.1\r\nHost: {u.netloc}\r\nConnection: close\r\n\r\n".encode())
+            # 用 GET 不用 HEAD：有的服务（如 Gitea）HEAD 响应不带 X-Frame-Options；读完响应头就断开
+            sock.sendall(f"GET {u.path or '/'} HTTP/1.1\r\nHost: {u.netloc}\r\nConnection: close\r\n\r\n".encode())
             head = b""
             while b"\r\n\r\n" not in head and len(head) < 32768:
                 chunk = sock.recv(4096)
