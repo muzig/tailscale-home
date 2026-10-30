@@ -2,7 +2,7 @@
 
 All notable changes to this project. Versions follow [Semantic Versioning](https://semver.org).
 
-## [Unreleased]
+## [0.4.0] — 2026-10-30
 
 ### Changed
 - The UI is English by default instead of following the browser language
@@ -40,6 +40,7 @@ First public release.
 - English and Chinese UI
 - Push-to-deploy with Gitea Actions on macOS; Docker Compose + systemd timer on Linux
 
+[0.4.0]: https://github.com/muzig/tailscale-home/compare/v0.3.0...v0.4.0
 [0.3.0]: https://github.com/muzig/tailscale-home/compare/v0.2.0...v0.3.0
 [0.2.0]: https://github.com/muzig/tailscale-home/compare/v0.1.0...v0.2.0
 [0.1.0]: https://github.com/muzig/tailscale-home/releases/tag/v0.1.0
