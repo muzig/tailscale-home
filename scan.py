@@ -178,7 +178,7 @@ def notes(out_dir):
         m = re.search(r"<title>(.*?)</title>", f.read_text(errors="replace"), re.S | re.I)
         when = datetime.fromtimestamp(f.stat().st_mtime).strftime("%Y-%m-%d %H:%M")
         marks.append({"name": html.unescape(m.group(1).strip()) if m else f.stem,
-                      "url": f"notes/{f.name}", "group": "Notes", "note": when})
+                      "url": f"notes/{f.name}", "group": "Notes", "note": when, "kind": "note"})
     return marks
 
 

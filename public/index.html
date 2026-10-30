@@ -437,10 +437,25 @@ function render() {
   // 点击最多的服务用宽磁贴
   const top = !state.device && [...list].sort((a, b) => (usage[b.url] || 0) - (usage[a.url] || 0) || a.order - b.order)[0];
   const groups = groupBy(list, s => (s.tags || [])[0] || OTHER);
-  const marks = state.device ? [] : groupBy(state.data.bookmarks || [], b => b.group || OTHER);
+  const marks = state.device ? [] : groupBy((state.data.bookmarks || []).filter(b => b.kind !== 'note'), b => b.group || OTHER);
+  // notes/ 里的私人页面：中磁贴，紧跟设备，不和书签小磁贴挤在一起
+  const notes = state.device ? [] : (state.data.bookmarks || []).filter(b => b.kind === 'note');
   let g = 0;
 
   let html = `<section class="group" style="--i:${g++}"><h2>${T.devices}</h2><div class="grid" style="--c:var(--cobalt)">${overviewTile()}${deviceTiles()}</div></section>`;
+  if (notes.length) {
+    html += `<section class="group" style="--i:${g++}"><h2>${esc(notes[0].group)}<small>${notes.length}</small></h2>
+      <div class="grid" style="--c:var(--mauve)">${notes.map(b => {
+        const i = n++;
+        return `<a class="tile m${state.engaged && i === state.sel ? ' sel' : ''}" data-nav data-i="${i}" href="${esc(b.url)}" data-url="${esc(b.url)}"
+                   title="${esc(b.name)}" aria-label="${esc(b.name)}">
+          <div class="faces">
+            <div class="face"><div class="glyph">${svg('doc')}</div></div>
+            <div class="face back"><p>${esc(b.name)}</p><span>${esc(b.note || '')}</span></div>
+          </div>
+          <span class="lbl">${esc(b.name)}</span></a>`;
+      }).join('')}</div></section>`;
+  }
   if (state.device && !list.length) {
     html += `<div class="note">${T.noSvc}</div>`;
   }
