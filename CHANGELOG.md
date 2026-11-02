@@ -5,7 +5,7 @@ All notable changes to this project. Versions follow [Semantic Versioning](https
 ## [Unreleased]
 
 ### Added
-- Settings page, in the Windows Phone pivot style, opened from the gear next to the all-services arrow. Sections are language, display and about, and more can be added the same way
+- Settings page, opened from the gear next to the all-services arrow. A vertical list (language, display, about) shows the current value on each row and opens that page; more rows can be added the same way
 - Language now lives in Settings. The choice is still remembered per browser (`tsh-lang`), and `?lang=` / `"lang"` in `services.json` still win until you pick one here
 - Display (Auto, Phone, Dual screen) is in Settings as well as the menu next to the clock; both write the same preference
 
