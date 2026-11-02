@@ -1,0 +1,49 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Progress</title>
+<style>
+  /* An app page is a plain static page. It runs sandboxed: no localStorage, no access to the home page. */
+  :root { color-scheme: dark; --accent: oklch(0.55 0.17 255); --fg-2: oklch(0.75 0 0); }
+  body { margin: 0; padding: 20px 18px 40px; background: #000; color: #fff;
+         font: 15px/1.45 "Segoe UI", system-ui, -apple-system, sans-serif; }
+  h1 { font-weight: 300; font-size: 40px; line-height: 1.1; margin: 0 0 4px; }
+  .sub { color: var(--fg-2); font-size: 13px; margin-bottom: 24px; }
+  h2 { font-weight: 300; font-size: 22px; line-height: 1.2; margin: 28px 0 10px; color: var(--accent); }
+  .focus { background: var(--accent); padding: 14px 16px; }
+  .focus b { display: block; font-weight: 300; font-size: 24px; line-height: 1.2; }
+  ul { list-style: none; margin: 0; padding: 0; }
+  li { padding: 10px 0; border-bottom: 1px solid oklch(0.3 0 0); }
+  li small { display: block; color: var(--fg-2); }
+  .tag { font-size: 12px; padding: 1px 6px; background: oklch(0.3 0 0); margin-left: 6px; }
+</style>
+</head>
+<body>
+  <h1>progress</h1>
+  <div class="sub">Example app · fake data · updated 2026-11-02 09:30</div>
+
+  <div class="focus"><small>Current focus</small><b>Garden project — stopped at soil</b></div>
+
+  <h2>waiting on you</h2>
+  <ul>
+    <li>Pick a soil mix<small>Recommended: the cheaper one; it drains fine</small></li>
+    <li>Water the seedlings twice a day?<small>Recommended: once, in the morning</small></li>
+    <li>Order a second planter<small>Recommended: wait until spring</small></li>
+  </ul>
+
+  <h2>done recently</h2>
+  <ul>
+    <li>Measured the balcony<small>Today</small></li>
+    <li>Compared three seed shops<small>Yesterday</small></li>
+  </ul>
+
+  <h2>efforts</h2>
+  <ul>
+    <li>Garden<span class="tag">active</span><small>4 of 9 steps done</small></li>
+    <li>Spanish<span class="tag">active</span><small>Reading practice</small></li>
+    <li>Bike repair<span class="tag">sleeping</span></li>
+  </ul>
+</body>
+</html>

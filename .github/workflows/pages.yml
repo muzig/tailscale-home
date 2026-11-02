@@ -4,7 +4,7 @@ name: Demo
 on:
   push:
     branches: [main]
-    paths: [public/**, demo/**, .github/workflows/pages.yml]
+    paths: [public/**, demo/**, examples/**, .github/workflows/pages.yml]
   workflow_dispatch:
 
 permissions:
@@ -28,6 +28,7 @@ jobs:
         run: |
           cp -r public _site
           cp demo/data.json _site/data.json
+          cp -r examples/apps _site/apps
       - uses: actions/configure-pages@v5
       - uses: actions/upload-pages-artifact@v3
         with:

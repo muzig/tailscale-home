@@ -1,0 +1,12 @@
+{
+  "api": 1,
+  "id": "progress",
+  "name": "Progress",
+  "name_i18n": { "zh": "进展" },
+  "version": "0.1.0",
+  "description": "Example app: an assistant's current focus, pending decisions and recent work (fake data)",
+  "entry": "index.html",
+  "glyph": "spark",
+  "tile": { "size": "w", "data": "tile.json", "stale_after": 86400 },
+  "producer": "examples/apps/progress (static example)"
+}

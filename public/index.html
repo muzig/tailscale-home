@@ -95,6 +95,11 @@
   .tile.s .badge { top: 4px; right: 6px; bottom: auto; font-size: 11px; }
   .flag { position: absolute; top: 6px; right: 8px; font-size: 11px; font-weight: 600; padding: 1px 5px;
           background: oklch(0 0 0 / 0.35); }
+  .flag.warn { background: var(--orange); }
+  .flag.error { background: var(--crimson); }
+  .glyph img { width: 38%; height: 38%; object-fit: contain; }
+  .tile.s .glyph img { width: 46%; height: 46%; }
+  .tile.w .glyph img { width: 19%; height: 38%; }
 
   /* 总览宽磁贴 */
   .ov { padding: 10px 12px; display: flex; flex-direction: column; }
@@ -252,6 +257,13 @@
   .about-row { padding: 18px 2px; border-bottom: 1px solid oklch(1 0 0 / 0.12); }
   .about-row .k { font: 600 12px/1 var(--font); letter-spacing: .06em; text-transform: uppercase; color: var(--fg-2); }
   .about-row .v { font: 300 24px/1.25 var(--font); margin-top: 6px; overflow-wrap: anywhere; }
+  .chan { font-weight: 700; color: #000; background: var(--orange); padding: 0 6px; margin-right: 8px; letter-spacing: .04em; }
+  .diag-list { list-style: none; margin: 8px 0 0; padding: 0; font-size: 14px; }
+  .diag-list li { padding: 8px 0; border-top: 1px solid oklch(1 0 0 / 0.08); overflow-wrap: anywhere; }
+  .diag-list li:first-child { border-top: 0; }
+  .diag-list small { display: block; color: var(--fg-2); font-size: 13px; margin-top: 2px; }
+  .diag-list .bad { color: var(--orange); }
+  .about-row a { text-decoration: underline; text-underline-offset: 3px; }
   #settings-body.in { animation: sheet-in .28s var(--metro); }
   @keyframes sheet-in { from { opacity: 0; transform: translateX(12px); } }
 
@@ -326,6 +338,11 @@ const I18N = {
     aboutTailnet: 'tailnet',
     allOnline: n => `All ${n} devices online`, more: n => `+${n} more`,
     svcUnit: 'services', nDown: n => `${n} unreachable`, allUp: 'All reachable',
+    updated: t => `Updated ${t}`, appStatus: { warn: 'Warning', error: 'Error' }, staleApp: 'Out of date',
+    settingsDiag: 'Diagnostics', channels: { stable: 'Stable', preview: 'Preview' }, previewMark: 'PREVIEW',
+    dChannel: 'Channel', dCommit: 'Version', dScan: 'Last scan', dTook: ms => `took ${(ms / 1000).toFixed(1)} s`,
+    dIssues: 'Problems', dNoIssues: 'None', dApps: 'Apps', dNoApps: 'No apps installed', dRaw: 'Raw data.json',
+    dNoTile: 'no tile data', dProbe: 'with port probing',
   },
   zh: {
     offline: '离线', unreachable: '不可达', online: '在线',
@@ -345,6 +362,11 @@ const I18N = {
     aboutTailnet: 'tailnet',
     allOnline: n => `${n} 台设备全部在线`, more: n => `还有 ${n} 台`,
     svcUnit: '个服务', nDown: n => `${n} 个不可达`, allUp: '全部可达',
+    updated: t => `更新于 ${t}`, appStatus: { warn: '注意', error: '出错' }, staleApp: '数据过期',
+    settingsDiag: '诊断', channels: { stable: '正式', preview: '测试' }, previewMark: '测试版',
+    dChannel: '通道', dCommit: '版本', dScan: '最近扫描', dTook: ms => `耗时 ${(ms / 1000).toFixed(1)} 秒`,
+    dIssues: '问题', dNoIssues: '没有', dApps: '应用', dNoApps: '没有安装应用', dRaw: '原始 data.json',
+    dNoTile: '没有磁贴数据', dProbe: '含端口探测',
   },
 };
 const pickLang = pref => /^zh/i.test(pref || '') ? 'zh' : pref ? 'en' : null;
@@ -430,7 +452,34 @@ function settingsSections() {
     { id: 'display', title: T.settingsDisplay, value: T.devices_[document.body.dataset.layout] || T.devices_.auto, icon: 'screen',
       body: optionList('device', T.device, DEVICES.map(id => [id, T.devices_[id]]), document.body.dataset.layout) },
     { id: 'about', title: T.settingsAbout, value: d?.title || '', icon: 'info', body: about },
+    ...(d && diagOn() ? [{ id: 'diagnostics', title: T.settingsDiag, value: diagSummary(d), icon: 'chart', body: diagBody(d) }] : []),
   ];
+}
+
+// 诊断：测试通道默认显示；正式通道加 ?debug=1 才显示
+const diagOn = () => state.data?.channel === 'preview' || new URLSearchParams(location.search).get('debug') === '1';
+function diagSummary(d) {
+  const n = d.diagnostics?.issues?.length || 0;
+  return `${T.channels[d.channel] || T.channels.stable} · ${n ? T.dIssues + ' ' + n : T.dIssues + ' · ' + T.dNoIssues}`;
+}
+function diagBody(d) {
+  const g = d.diagnostics || {};
+  const row = (k, v) => `<div class="about-row"><div class="k">${esc(k)}</div><div class="v">${v}</div></div>`;
+  const issues = g.issues || [];
+  const apps = d.apps || [];
+  return row(T.dChannel, esc(T.channels[d.channel] || T.channels.stable))
+    + row(T.dCommit, esc(g.commit || '—'))
+    + row(T.dScan, `${esc(ago(d.generated) || '—')}<ul class="diag-list"><li>${esc(d.generated ? new Date(d.generated).toLocaleString() : '')}<small>${
+        [g.duration_ms != null ? T.dTook(g.duration_ms) : '', g.probe ? T.dProbe : ''].filter(Boolean).map(esc).join(' · ')}</small></li></ul>`)
+    + row(`${T.dIssues} (${issues.length})`, issues.length
+        ? `<ul class="diag-list">${issues.map(i => `<li class="bad">${esc(i.source)} · ${esc(i.name)}<small>${esc(i.message)}</small></li>`).join('')}</ul>`
+        : esc(T.dNoIssues))
+    + row(`${T.dApps} (${apps.length})`, apps.length
+        ? `<ul class="diag-list">${apps.map(a => `<li${a.stale || a.status ? ' class="bad"' : ''}>${esc(appName(a))} · ${esc(a.id)}${a.version ? ' v' + esc(a.version) : ''}<small>${
+            [a.updated ? T.updated(ago(a.updated)) : T.dNoTile, a.stale ? T.staleApp : '', T.appStatus[a.status] || '', a.producer || '']
+              .filter(Boolean).map(esc).join(' · ')}</small></li>`).join('')}</ul>`
+        : esc(T.dNoApps))
+    + row('data.json', `<a href="data.json" target="_blank" rel="noopener">${esc(T.dRaw)}</a>`);
 }
 function syncSettings(open) {
   const el = $('settings');
@@ -609,6 +658,34 @@ function svcTile(s, size) {
   </a>`;
 }
 
+// 应用（docs/apps.md）：var/apps/<id>/ 里的静态页面 + 生产者推来的 tile.json
+const appName = a => a.name_i18n?.[lang] || a.name;
+const appIcon = a => a.icon ? `<img src="${esc(a.icon)}" alt="">`
+  : a.glyph ? svg(a.glyph) : `<span class="ch">${esc(initial(appName(a)))}</span>`;
+
+function appTile(a, size = a.size || 'm') {
+  const name = appName(a);
+  const when = a.updated ? ago(a.updated) : '';
+  const lines = [...(a.live || []), ...(a.stale && when ? [T.updated(when)] : [])];
+  const back = lines.length
+    ? `<div class="face back live"><p>${esc(lines[0])}</p>${lines.slice(1).map(l => `<span>${esc(l)}</span>`).join('')}</div>`
+    : a.description ? `<div class="face back"><p>${esc(a.description)}</p><span>${esc(a.version ? 'v' + a.version : '')}</span></div>` : '';
+  const flag = a.stale ? T.staleApp : T.appStatus[a.status] || '';
+  const inner = `<div class="faces">
+      <div class="face"><div class="glyph">${appIcon(a)}</div></div>
+      ${size !== 's' ? back : ''}
+    </div>
+    <span class="lbl">${esc(name)}</span>
+    ${a.badge ? `<span class="badge">${a.badge}</span>` : ''}
+    ${flag ? `<span class="flag${a.stale || !a.status ? '' : ' ' + esc(a.status)}">${flag}</span>` : ''}`;
+  const title = [name, a.description, a.version && `v${a.version}`, when && T.updated(when), a.producer].filter(Boolean).join('\n');
+  const cls = `tile ${size}${a.stale ? ' dim' : ''}${a.live?.length ? ' live' : ''}`;
+  if (!a.url) return `<div class="${cls}" title="${esc(title)}" aria-label="${esc(name)}">${inner}</div>`;
+  const i = n++;
+  return `<a class="${cls}${selCls(i)}" data-nav data-i="${i}" href="${esc(a.url)}" data-url="${esc(a.url)}"
+             title="${esc(title)}" aria-label="${esc(name)}${flag ? T.sep + flag : ''}">${inner}</a>`;
+}
+
 let ovPage = 0;   // 总览磁贴当前显示第几页，重绘时保持
 
 function overviewTile() {
@@ -697,6 +774,8 @@ function pinnedTiles(pins, list) {
     const { name, size } = typeof p === 'string' ? { name: p } : p;
     const s = list.find(x => x.name === name);
     if (s) return svcTile(s, size || 'm');
+    const a = (state.data.apps || []).find(x => x.id === name || x.name === name);
+    if (a) return appTile(a, size || a.size);
     const b = marks.find(x => x.name === name);
     if (!b) return '';
     return b.kind === 'note' ? noteTile(b, size || 'm') : markTile(b, size || 's');
@@ -723,6 +802,7 @@ function render() {
   if (pins) {
     rest = pinnedTiles(pins, list);
   } else {
+    if (!state.device) rest += (state.data.apps || []).map(a => appTile(a)).join('');
     if (notes.length && !host) rest += notes.map(b => noteTile(b)).join('');
     if (state.device && !list.length) rest += `<div class="note">${T.noSvc}</div>`;
     groups.forEach(([name, items]) => {
@@ -758,6 +838,7 @@ function renderApps() {
   const items = [
     ...data.services.map(s => ({ name: s.name, url: resolveUrl(s, data.devices), sub: s.device, icon: svg(glyphOf(s)) })),
     ...(data.bookmarks || []).map(b => ({ name: b.name, url: b.url, sub: b.note || '', icon: `<span class="ch">${esc(initial(b.name))}</span>` })),
+    ...(data.apps || []).filter(a => a.url).map(a => ({ name: appName(a), url: a.url, sub: a.description || '', icon: appIcon(a) })),
   ].sort((a, b) => a.name.localeCompare(b.name, undefined, { sensitivity: 'base' }));
   let html = '', last = '';
   for (const it of items) {
@@ -888,16 +969,19 @@ const framed = () => { const q = FRAMED[document.body.dataset.layout]; return !!
 function openViewer(url) {
   const { services: all, devices, bookmarks = [] } = state.data;
   const svc = all.find(s => resolveUrl(s, devices) === url);
-  const item = svc || bookmarks.find(b => b.url === url) || { name: url };
+  const app = (state.data.apps || []).find(a => a.url === url);
+  const item = svc || (app && { ...app, name: appName(app) }) || bookmarks.find(b => b.url === url) || { name: url };
   // https 页面里浏览器不加载 http 内容；X-Frame-Options 等由 scan.py 检查后记在 embed 里
   const mixed = location.protocol === 'https:' && new URL(url, location.href).protocol === 'http:';
   const why = mixed ? T.mixed : item.embed === false ? T.noFrame : '';
   $('viewer-title').textContent = item.name;
   $('viewer-ext').href = url;
   $('viewer-body').innerHTML = why
-    ? `<div class="splash"><div class="glyph">${svc ? svg(glyphOf(svc)) : `<span class="ch">${esc(initial(item.name))}</span>`}</div>
+    ? `<div class="splash"><div class="glyph">${svc ? svg(glyphOf(svc)) : app ? appIcon(app) : `<span class="ch">${esc(initial(item.name))}</span>`}</div>
          <h2>${esc(item.name)}</h2><p>${why}</p><a href="${esc(url)}" target="_blank" rel="noopener">${T.openTab}</a></div>`
-    : `<iframe src="${esc(url)}" title="${esc(item.name)}" referrerpolicy="no-referrer"></iframe>`;
+    // 应用不给 allow-same-origin：读不到主页的 localStorage 和 DOM（nginx 的 CSP 也会加同样的沙箱）
+    : `<iframe src="${esc(url)}" title="${esc(item.name)}" referrerpolicy="no-referrer"${app
+        ? ' sandbox="allow-scripts allow-forms allow-popups allow-popups-to-escape-sandbox"' : ''}></iframe>`;
   if (!$('viewer').classList.contains('open')) history.pushState({ viewer: 1 }, '');
   $('viewer').classList.add('open');
 }
@@ -974,9 +1058,9 @@ function load() {
       state.data = data;
       setLang(data.lang);
       if (PALETTE.includes(data.accent)) document.documentElement.style.setProperty('--accent', `var(--${data.accent})`);
-      document.title = data.title;
+      document.title = data.channel === 'preview' ? `[${T.previewMark}] ${data.title}` : data.title;
       const bars = Math.ceil(data.devices.filter(d => d.online).length / Math.max(data.devices.length, 1) * 5);
-      $('tray-l').innerHTML = `<span class="sig" aria-hidden="true">${[1, 2, 3, 4, 5].map(i =>
+      $('tray-l').innerHTML = (data.channel === 'preview' ? `<span class="chan">${esc(T.previewMark)}</span>` : '') + `<span class="sig" aria-hidden="true">${[1, 2, 3, 4, 5].map(i =>
         `<i class="${i <= bars ? 'on' : ''}" style="height:${i * 20}%"></i>`).join('')}</span>${esc(data.tailnet)}`;
       loadState();
       render();

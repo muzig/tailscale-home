@@ -8,6 +8,7 @@ Sources (merged, de-duplicated by URL):
   4. --probe                        -> scan common ports on online peers
   5. "live" on a service           -> fetch a JSON URL and show a few values on the tile
   6. notes/*.html next to the output -> private pages, listed as bookmarks in a "Notes" group
+  7. apps/<id>/manifest.json next to the output -> installed apps with live tiles (docs/apps.md)
 
 Usage:
   python3 scan.py            # devices + serve + services.json
@@ -24,6 +25,7 @@ import socket
 import ssl
 import subprocess
 import sys
+import time
 import urllib.request
 from urllib.parse import urlsplit
 from datetime import datetime, timezone
@@ -225,12 +227,120 @@ def notes(out_dir, group="Notes", device=None):
     return marks
 
 
+# 诊断：扫描中跳过或失败的东西，写进 data.json 给页面的「诊断」页看；stderr 照旧打印
+ISSUES = []
+
+
+def issue(source, name, err):
+    msg = f"{type(err).__name__}: {err}" if isinstance(err, Exception) else str(err)
+    ISSUES.append({"source": source, "name": name, "message": msg})
+    print(f"{source} {name}: {msg}", file=sys.stderr)
+
+
+def redact(spec, text):
+    """live 的 url / headers 里用 $VAR 引用的值（多半是令牌）不能出现在诊断里。"""
+    refs = re.findall(r"\$\{?(\w+)\}?", json.dumps({k: spec.get(k) for k in ("url", "headers")}))
+    for name in refs:
+        value = os.environ.get(name)
+        if value and len(value) >= 4:
+            text = text.replace(value, f"${name}")
+    return text
+
+
+def commit():
+    """部署目录是 git 检出：诊断里显示正在跑哪个版本。"""
+    try:
+        return subprocess.run(["git", "-C", str(ROOT), "rev-parse", "--short=12", "HEAD"],
+                              capture_output=True, text=True, timeout=5).stdout.strip()
+    except Exception:
+        return ""
+
+
+APP_API = 1
+APP_ID = re.compile(r"^[a-z0-9](?:[a-z0-9-]{0,38}[a-z0-9])$")
+
+
+def app_path(base, rel):
+    """应用内的相对路径；拒绝绝对路径、.. 和指向目录外的软链接。"""
+    if not isinstance(rel, str) or not rel or rel.startswith("/") or "\\" in rel or ".." in rel.split("/"):
+        raise ValueError(f"bad path {rel!r}")
+    p = (base / rel).resolve()
+    if base.resolve() not in p.parents:
+        raise ValueError(f"path {rel!r} leaves the app directory")
+    return p
+
+
+def load_app(d, now):
+    """读取一个应用目录：只读 JSON，不执行也不请求应用里的任何东西。"""
+    m = json.loads((d / "manifest.json").read_text())
+    if m.get("api") != APP_API:
+        raise ValueError(f"unsupported api {m.get('api')!r} (this scanner speaks {APP_API})")
+    if m.get("id") != d.name or not APP_ID.match(d.name):
+        raise ValueError(f"id {m.get('id')!r} must match the directory name and be 2-40 of [a-z0-9-]")
+    if not isinstance(m.get("name"), str) or not m["name"].strip():
+        raise ValueError("name is required")
+    url = lambda rel: f"apps/{d.name}/{app_path(d, rel).relative_to(d.resolve()).as_posix()}"
+    entry = m.get("entry", "index.html")
+    tile = m.get("tile") or {}
+    app = {
+        "id": d.name, "name": m["name"].strip(), "version": str(m.get("version", "")),
+        "url": url(entry) if entry else None, "size": tile.get("size") if tile.get("size") in ("s", "m", "w") else "m",
+        "embed": m.get("embed", True) is not False, "kind": "app",
+    }
+    for key in ("name_i18n", "description", "glyph", "producer"):
+        if m.get(key):
+            app[key] = m[key]
+    if m.get("icon"):
+        app["icon"] = url(m["icon"])
+    # 磁贴数据损坏只丢掉磁贴，应用照样显示
+    data_file = app_path(d, tile.get("data", "tile.json"))
+    if data_file.exists():
+        try:
+            t = json.loads(data_file.read_text())
+            lines = [str(x) for x in t.get("lines", [])][:4]
+            if lines:
+                app["live"] = lines
+            if isinstance(t.get("badge"), int) and t["badge"] > 0:
+                app["badge"] = t["badge"]
+            if t.get("status") in ("warn", "error"):
+                app["status"] = t["status"]
+            if t.get("updated"):
+                updated = datetime.fromisoformat(str(t["updated"]).replace("Z", "+00:00"))
+                if updated.tzinfo is None:
+                    raise ValueError("updated needs a time zone")
+                app["updated"] = updated.isoformat(timespec="seconds")
+                limit = tile.get("stale_after")
+                if isinstance(limit, (int, float)) and limit > 0:
+                    app["stale"] = (now - updated).total_seconds() > limit
+        except Exception as e:
+            issue("app", d.name, f"tile data skipped: {type(e).__name__}: {e}")
+    return app
+
+
+def apps(out_dir):
+    """Installed apps: <out dir>/apps/<id>/manifest.json. A broken app is skipped, never the whole scan."""
+    root = out_dir / "apps"
+    now = datetime.now(timezone.utc)
+    found = []
+    for d in sorted(root.iterdir() if root.is_dir() else []):
+        if not (d / "manifest.json").is_file():
+            continue
+        try:
+            found.append(load_app(d, now))
+        except Exception as e:
+            issue("app", d.name, f"skipped: {type(e).__name__}: {e}")
+    return found
+
+
 def main():
     ap = argparse.ArgumentParser()
     ap.add_argument("--probe", action="store_true", help="probe common web ports on online devices")
     ap.add_argument("-o", "--out", default=str(ROOT / "public" / "data.json"))
     ap.add_argument("-s", "--services", default=str(ROOT / "services.json"), help="hand-written services file")
+    ap.add_argument("--channel", choices=["stable", "preview"],
+                    help="release channel shown on the page (default: services.json \"channel\", else stable)")
     args = ap.parse_args()
+    started = time.monotonic()
 
     cli = find_cli()
     status = ts_json(cli, "status")
@@ -292,7 +402,7 @@ def main():
             try:
                 s["live"] = live(spec)
             except Exception as e:
-                print(f"live data for {s['name']} failed: {e}", file=sys.stderr)
+                issue("live", s["name"], redact(spec, f"{type(e).__name__}: {e}"))
 
     data = {
         "title": manual.get("title", "Tailnet Home"),
@@ -302,13 +412,17 @@ def main():
         "generated": datetime.now(timezone.utc).isoformat(timespec="seconds"),
         "devices": devices,
         "services": services,
+        "apps": apps(Path(args.out).resolve().parent),
         "bookmarks": notes(Path(args.out).resolve().parent, manual.get("notes_group") or "Notes", self_dev["name"]) + manual.get("bookmarks", []),
         "start": manual.get("start"),         # 手机开始屏幕固定的磁贴；不写则显示全部
         "accent": manual.get("accent", ""),   # 手机开始屏幕的主题色
+        "channel": args.channel or (manual.get("channel") if manual.get("channel") in ("stable", "preview") else "stable"),
     }
+    data["diagnostics"] = {"commit": commit(), "duration_ms": round((time.monotonic() - started) * 1000),
+                           "probe": args.probe, "issues": ISSUES}
     Path(args.out).write_text(json.dumps(data, ensure_ascii=False, indent=2))
     online = sum(d["online"] for d in devices)
-    print(f"wrote {args.out}: {len(devices)} devices ({online} online), {len(services)} services")
+    print(f"wrote {args.out}: {len(devices)} devices ({online} online), {len(services)} services, {len(data['apps'])} apps")
 
 
 if __name__ == "__main__":

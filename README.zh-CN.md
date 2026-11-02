@@ -75,7 +75,7 @@ python3 -m http.server -d public 8000
 
 1. **Gitea 与 runner**：部署 [Gitea](https://about.gitea.com)，以 *host* 模式注册 [act runner](https://docs.gitea.com/usage/actions/act-runner)，把 workflow 里的 `runs-on: macmini` 改成你的 runner 标签。
 2. **服务清单**：放在服务器的 `~/src/self-hosted/tailscale-home/var/services.json`（仓库之外，不会被提交）。
-3. **推送**：每次 push 到 `main`，workflow 会同步代码、安装扫描 LaunchAgent、按提交号构建镜像、在 `127.0.0.1:4183` 启动、健康检查，并保留最近 5 个镜像。
+3. **推送**：每次 push 到 `main`，workflow 会同步代码、安装扫描 LaunchAgent、按提交号构建镜像、在 `127.0.0.1:4183` 启动、健康检查，并保留最近 8 个镜像。
 4. **暴露到 tailnet**（一次性）：
 
    ```bash
@@ -83,6 +83,8 @@ python3 -m http.server -d public 8000
    ```
 
    macOS 应用版的 CLI 是 `/Applications/Tailscale.app/Contents/MacOS/Tailscale`，非终端环境需加 `TAILSCALE_BE_CLI=1`。
+
+**测试通道**：push 到 `preview` 分支时，同一个 workflow 会在 `127.0.0.1:4185` 另部署一份，数据独立，界面带「测试版」标记，设置里有「诊断」页；看过没问题再合并进 `main`。一次性暴露：`tailscale serve --bg --https=8444 http://127.0.0.1:4185`。详见 [docs/channels.zh-CN.md](docs/channels.zh-CN.md)。正式通道在地址后加 `?debug=1` 也能看到诊断页。
 
 扫描脚本在宿主机上跑而不进容器，因为要调用宿主机的 Tailscale CLI。回滚：把部署目录 `.env` 里的 `IMAGE_TAG` 改成旧提交前缀，再 `docker compose up -d --no-build`。
 
@@ -133,6 +135,17 @@ tailscale serve --bg --set-path / http://127.0.0.1:4183
 ## 私人页面
 
 把任意 `.html` 放进 `data.json` 旁边的 `notes/` 目录（Docker 部署里就是 `var/notes/`），下次扫描后会出现在主页的 **Notes** 分组里（新的在前，名字取 `<title>`），nginx 在 `/notes/` 下提供访问。在 `services.json` 里设 `"notes_group"` 为某个标签，就会并进那个分组。适合放要在手机上复制的草稿，内容只在你的服务器和 tailnet 里。
+
+## 应用（Apps）
+
+像装 APK 一样给主页装应用，只不过应用就是一个放静态网页文件的目录。把它拷进 `data.json` 旁边的 `apps/`（Docker 部署里就是 `var/apps/<id>/`），下次扫描后它的动态磁贴就会出现在开始屏幕上，点开在设备屏幕里打开。磁贴数据 `tile.json` 由 tailnet 里的另一个程序（生产者）更新，比如用 `rsync` 推送。应用运行在沙箱里，读不到主页的存储，也改不了主页。可以先试试 `examples/apps/progress/`（虚构数据），完整规范见 [docs/apps.zh-CN.md](docs/apps.zh-CN.md)。
+
+```
+var/apps/progress/
+  manifest.json   # {"api": 1, "id": "progress", "name": "Progress", "tile": {"size": "w"}}
+  tile.json       # {"updated": "…", "lines": ["Garden · at soil", "3 decisions waiting"], "badge": 3}
+  index.html      # 应用页面
+```
 
 ## 说明
 

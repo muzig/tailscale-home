@@ -1,20 +1,22 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
-<!-- Template: the deploy workflow replaces __DEPLOY_DIR__ and __HOME__ before installing. -->
+<!-- Template: the deploy workflow replaces __DEPLOY_DIR__, __HOME__, __LABEL__ and __CHANNEL__ before installing.
+     __LABEL__ is local.tailscale-home.scan (stable) or local.tailscale-home-preview.scan (preview). -->
 <plist version="1.0">
 <dict>
-  <key>Label</key><string>local.tailscale-home.scan</string>
+  <key>Label</key><string>__LABEL__</string>
   <key>ProgramArguments</key>
   <array>
     <string>/usr/bin/python3</string><string>__DEPLOY_DIR__/scan.py</string>
     <string>--probe</string>
+    <string>--channel</string><string>__CHANNEL__</string>
     <string>-s</string><string>__DEPLOY_DIR__/var/services.json</string>
     <string>-o</string><string>__DEPLOY_DIR__/var/data.json</string>
   </array>
   <key>WorkingDirectory</key><string>__DEPLOY_DIR__</string>
   <key>RunAtLoad</key><true/>
   <key>StartInterval</key><integer>600</integer>
-  <key>StandardOutPath</key><string>__HOME__/Library/Logs/tailscale-home-scan.log</string>
-  <key>StandardErrorPath</key><string>__HOME__/Library/Logs/tailscale-home-scan.log</string>
+  <key>StandardOutPath</key><string>__HOME__/Library/Logs/__LABEL__.log</string>
+  <key>StandardErrorPath</key><string>__HOME__/Library/Logs/__LABEL__.log</string>
 </dict>
 </plist>

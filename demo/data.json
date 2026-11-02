@@ -204,6 +204,31 @@
       "note": "Jupyter on the GPU box"
     }
   ],
+  "apps": [
+    {
+      "id": "progress",
+      "name": "Progress",
+      "version": "0.1.0",
+      "url": "apps/progress/index.html",
+      "size": "w",
+      "embed": true,
+      "kind": "app",
+      "name_i18n": {
+        "zh": "进展"
+      },
+      "description": "Example app: an assistant's current focus, pending decisions and recent work (fake data)",
+      "glyph": "spark",
+      "producer": "examples/apps/progress (static example)",
+      "live": [
+        "Garden · at soil",
+        "3 decisions waiting",
+        "2 done today"
+      ],
+      "badge": 3,
+      "updated": "2026-11-02T09:30:00+08:00",
+      "stale": false
+    }
+  ],
   "bookmarks": [
     {
       "name": "Tailscale admin",

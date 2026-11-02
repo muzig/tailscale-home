@@ -4,7 +4,7 @@
   "_comment_notes_group": "Optional: put pages from notes/ into this tag's group instead of a separate Notes group.",
   "notes_group": "",
   "_comment_live": "Optional per service: `live` fetches a JSON URL on every scan and shows the lines in `show` on the tile back. `{path.to.value}` or `{value:.0f}` (Python format) pick values; `root` picks a sub-object first; $VARS in url/headers come from the environment.",
-  "_comment_start": "Optional: pin only these tiles to the Start screen, in this order (service, bookmark or note names; {\"name\": \"Jellyfin\", \"size\": \"w\"} for s/m/w). Everything else stays in the A–Z list. Leave out to show everything. `accent` sets the phone tile color: cobalt, emerald, crimson, teal, magenta, orange, indigo, brown, mauve, violet, olive.",
+  "_comment_start": "Optional: pin only these tiles to the Start screen, in this order (service, bookmark, note or app names, or app ids; {\"name\": \"Jellyfin\", \"size\": \"w\"} for s/m/w). Everything else stays in the A–Z list. Leave out to show everything. `accent` sets the phone tile color: cobalt, emerald, crimson, teal, magenta, orange, indigo, brown, mauve, violet, olive.",
   "start": [
     "Gitea",
     {
@@ -14,6 +14,8 @@
     "Home Assistant"
   ],
   "accent": "cobalt",
+  "_comment_channel": "Optional: \"stable\" (default) or \"preview\". The deploy workflow passes --channel itself; set this only when you run scan.py by hand. See docs/channels.md.",
+  "channel": "stable",
   "_comment": "Copy to services.json (git-ignored) and edit. `device` is the MagicDNS short name. Give a full `url`, or just `port`/`path`/`scheme` and scan.py builds the address from the device's Tailscale IP (MagicDNS name for https). `lang`: \"en\" or \"zh\"; empty means English unless the viewer switches. Icons are picked from the name; set `glyph` to override: ledger, coin, book, reader, photo, cloud, doc, pen, git, code, car, chart, db, server, spark, home, globe.",
   "services": [
     {

@@ -84,7 +84,7 @@ deploy/*.service, *.timer      # the same as a systemd user timer (Linux)
 
 1. **Gitea + runner.** Run [Gitea](https://about.gitea.com) and register an [act runner](https://docs.gitea.com/usage/actions/act-runner) in *host* mode on the server. Change `runs-on: macmini` in the workflow to your runner's label.
 2. **Your services.** Put your list at `~/src/self-hosted/tailscale-home/var/services.json` on the server (outside the repo, so it never gets committed).
-3. **Push.** On every push to `main` the workflow syncs the code, installs the scan LaunchAgent, builds the image tagged with the commit, starts it on `127.0.0.1:4183`, health-checks it, and keeps the last 5 images.
+3. **Push.** On every push to `main` the workflow syncs the code, installs the scan LaunchAgent, builds the image tagged with the commit, starts it on `127.0.0.1:4183`, health-checks it, and keeps the last 8 images.
 4. **Expose it to the tailnet** (one time):
 
    ```bash
@@ -92,6 +92,8 @@ deploy/*.service, *.timer      # the same as a systemd user timer (Linux)
    ```
 
    On the Mac App Store / standalone app, the CLI is `/Applications/Tailscale.app/Contents/MacOS/Tailscale` and needs `TAILSCALE_BE_CLI=1` when run outside a terminal.
+
+**Preview channel.** Push to a `preview` branch and the same workflow deploys a second copy on `127.0.0.1:4185` with its own data, marked *PREVIEW* and with a Diagnostics page in Settings; merge to `main` when it looks right. Expose it once with `tailscale serve --bg --https=8444 http://127.0.0.1:4185`. See [docs/channels.md](docs/channels.md). On stable, add `?debug=1` to the address to see Diagnostics.
 
 The scanner runs on the host, not in the container, because it calls the host's Tailscale CLI. Rollback: set `IMAGE_TAG` in the deploy dir's `.env` to an older commit prefix and run `docker compose up -d --no-build`.
 
@@ -151,6 +153,17 @@ Give a service a `live` block and the scanner fetches a JSON URL on every scan; 
 ## Private notes
 
 Drop any `.html` file into `notes/` next to `data.json` (`var/notes/` in the Docker setups). The next scan lists it in a **Notes** group, newest first, named by its `<title>`, and nginx serves it at `/notes/`. Set `"notes_group"` in `services.json` to one of your tags to put them in that group instead. Handy for drafts you want to copy on your phone — they stay on your server and inside your tailnet.
+
+## Apps
+
+Install an app the way you'd install an APK — except an app is just a directory of static web files. Copy it into `apps/` next to `data.json` (`var/apps/<id>/` in the Docker setups) and the next scan pins its live tile; tapping it opens the app inside the device screen. Some other program on your tailnet (the *producer*) keeps its `tile.json` up to date, e.g. with `rsync`. Apps run sandboxed: they can't read the home page's storage or touch the page. Try `examples/apps/progress/` (fake data), and see [docs/apps.md](docs/apps.md) for the full spec.
+
+```
+var/apps/progress/
+  manifest.json   # {"api": 1, "id": "progress", "name": "Progress", "tile": {"size": "w"}}
+  tile.json       # {"updated": "…", "lines": ["Garden · at soil", "3 decisions waiting"], "badge": 3}
+  index.html      # the app page
+```
 
 ## Notes
 

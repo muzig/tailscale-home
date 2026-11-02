@@ -25,7 +25,7 @@ jobs:
         run: python tests/smoke.py
 
       - name: JSON files are valid
-        run: for f in demo/data.json services.example.json tests/fixtures/*.json; do python -m json.tool "$f" > /dev/null || exit 1; done
+        run: for f in demo/data.json services.example.json tests/fixtures/*.json examples/apps/*/*.json; do python -m json.tool "$f" > /dev/null || exit 1; done
 
       - name: Page script parses
         run: |

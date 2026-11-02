@@ -5,12 +5,17 @@ All notable changes to this project. Versions follow [Semantic Versioning](https
 ## [Unreleased]
 
 ### Added
+- **Release channels** ([docs](docs/channels.md)): pushing to a `preview` branch deploys a second, independent copy (own checkout, `var/`, scan agent, port 4185, compose project). The page marks it *PREVIEW*; merge to `main` to release to stable
+- **Diagnostics** in Settings, always on the preview channel and with `?debug=1` on stable: channel, deployed commit, last scan time and duration, skipped apps and failing `live` tiles with the reason, each app's version, update time and producer, and a link to the raw `data.json`. `scan.py` now writes `channel` (`--channel` or `"channel"` in `services.json`) and `diagnostics` into `data.json`; `$VAR` values used by `live` are redacted from error messages
+- **Apps** ([spec](docs/apps.md)): a directory in `var/apps/<id>/` with a `manifest.json`, an optional `tile.json` and static pages. The scanner validates it and lists it in `data.json` as `apps`; the page shows its live tile (lines, badge, warn/error, dimmed when older than `stale_after`), pins it with `start` by name or id, lists it A–Z and opens it inside the device screen. App pages run sandboxed, in the iframe and via a CSP header from nginx at `/apps/`, so they can't read the home page's storage. Example: `examples/apps/progress/`, also in the live demo
 - Settings page, opened from the gear next to the all-services arrow. A vertical list (language, display, about) shows the current value on each row and opens that page; more rows can be added the same way
 - Language now lives in Settings. The choice is still remembered per browser (`tsh-lang`), and `?lang=` / `"lang"` in `services.json` still win until you pick one here
 - Display (Auto, Phone, Dual screen) is in Settings as well as the menu next to the clock; both write the same preference
 
 ### Changed
 - Removed the language button next to the clock
+- The scan agent's label and log are per channel; the stable log moved from `~/Library/Logs/tailscale-home-scan.log` to `~/Library/Logs/local.tailscale-home.scan.log`
+- The deploy workflow keeps the last 8 images instead of 5, since two channels share them, and only stable updates `tailscale-home:latest`
 
 ## [0.5.0] — 2026-10-30
 
