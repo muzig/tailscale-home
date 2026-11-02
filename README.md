@@ -38,7 +38,7 @@ A start page for your [Tailscale](https://tailscale.com) network — every devic
 - Keyboard: `↑↓` select, `↵` open, `⌘↵` open in new tab, `Esc` clear the device filter; tap a device to see only its services
 - Most-clicked services float to the top (stored in your browser only)
 - A Windows Phone 8.1 Start screen on phone and desktop alike: black background, one accent color, turnstile animation, live tiles, and an A–Z list behind the → button (swipe left on a phone). On a computer, pick how to show it from the menu next to the clock (or `?device=`): **Auto** (6 columns), **Phone** (a phone with a bezel) or **Dual screen** (a Surface Duo: Start on the left screen, the service you tap opens on the right). In Phone and Dual screen, services open inside the device screen when they allow it; ones that send `X-Frame-Options`, or http services when the home page is on https, show a launch screen with an *Open in a new tab* button instead. Pin just the tiles you want with `start` in `services.json`; the rest live in the A–Z list
-- English and Chinese UI: English by default, switch with the button next to the clock (remembered per browser), or set it with `?lang=zh` / `"lang"` in `services.json`
+- English and Chinese UI: English by default. Change it in Settings — the gear beside the all-services arrow — remembered per browser, or set it with `?lang=zh` / `"lang"` in `services.json`. Settings is a Windows Phone pivot (language, display, about) so further preferences can be added as sections. Display is the same Auto / Phone / Dual screen choice as the menu next to the clock
 - One static HTML file + one stdlib-only Python script. No build step, no framework, no database
 
 ## How it compares

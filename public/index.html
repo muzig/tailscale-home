@@ -53,8 +53,7 @@
   .tray { display: flex; justify-content: space-between; font-size: 12px; color: var(--fg-2); padding: 4px 0; }
   .tray b { font-weight: 600; color: var(--fg); }
   .tray-r { display: flex; align-items: center; gap: 14px; }
-  #lang { font-size: 12px; color: var(--fg-2); padding: 2px 0; }
-  @media (hover: hover) { #lang:hover, #device:hover { color: var(--fg); } }
+  @media (hover: hover) { #device:hover { color: var(--fg); } }
   #device { display: none; font: inherit; font-size: 12px; color: var(--fg-2); background: transparent; border: 0; padding: 2px 0; cursor: pointer; }
   #device option { background: #000; color: #fff; }
 
@@ -130,10 +129,12 @@
            transform: translateY(-100%); transition: transform .35s var(--metro); }
   .toast.show { transform: none; }
 
-  /* 应用列表：Windows Phone 开始屏幕右下角箭头进入的字母列表，电脑上也能用 */
-  .to-apps { display: grid; place-items: center; width: 44px; height: 44px; margin: 24px 0 0 auto;
-             border: 2px solid var(--fg); border-radius: 50%; }
-  .to-apps svg { width: 20px; height: 20px; fill: none; stroke: currentColor; stroke-width: 2; }
+  /* 右下角：设置齿轮 + 进入全部服务的箭头，和 WP 开始屏幕的圆按钮同一套 */
+  .appbar { display: flex; justify-content: flex-end; gap: 12px; margin: 24px 0 0; }
+  .round { display: grid; place-items: center; width: 44px; height: 44px; flex: none;
+           border: 2px solid var(--fg); border-radius: 50%; }
+  .round svg { width: 20px; height: 20px; fill: none; stroke: currentColor; stroke-width: 2;
+               stroke-linecap: round; stroke-linejoin: round; }
   .apps { display: block; position: fixed; inset: 0; z-index: 3; background: var(--bg); overflow-y: auto;
           padding: 0 max(16px, calc(50% - 380px)) 48px; transform: translateX(100%); visibility: hidden; touch-action: pan-y;
           transition: transform .45s var(--metro), visibility 0s .45s; }
@@ -196,7 +197,11 @@
     body[data-layout="phone"] .device { display: block; position: relative; overflow: hidden;
       width: calc(4 * 86px + 3 * var(--g) + 32px + 24px); height: min(880px, calc(100vh - 40px)); margin: 20px auto;
       border: 12px solid #000; border-radius: 44px; box-shadow: 0 0 0 2px #3a3a3c, 0 20px 60px #0008; background: #000; }
-    body[data-layout="phone"] .wrap { --cols: 4; --u: 86px; height: 100%; overflow-y: auto; scrollbar-width: none; }
+    /* 外框自己不滚动：开始屏幕在 .start 里滚，设置页盖在屏幕上（不跟着滚走） */
+    body[data-layout="phone"] .wrap { --cols: 4; --u: 86px; height: 100%; position: relative; overflow: hidden; padding: 0; }
+    body[data-layout="phone"] .start { position: absolute; inset: 0; overflow-y: auto; scrollbar-width: none;
+                                       padding: max(env(safe-area-inset-top), 4px) 16px 48px; }
+    body[data-layout="phone"] .sheet { position: absolute; }
     body[data-layout="phone"] .apps { position: absolute; }
     body[data-layout="phone"] .viewer.open { display: flex; flex-direction: column; position: absolute; inset: 0; z-index: 4; background: #000; }
   }
@@ -206,12 +211,46 @@
     body[data-layout="duo"] .wrap, body[data-layout="duo"] .screen2 { flex: none; position: relative; overflow: hidden;
       width: calc(4 * 96px + 3 * var(--g) + 32px + 24px); height: 100%; margin: 0;
       border: 12px solid #000; border-radius: 36px; box-shadow: 0 0 0 2px #3a3a3c, 0 20px 60px #0008; background: #000; }
-    body[data-layout="duo"] .wrap { --cols: 4; --u: 96px; max-width: none; overflow-y: auto; scrollbar-width: none; }
+    body[data-layout="duo"] .wrap { --cols: 4; --u: 96px; max-width: none; overflow: hidden; padding: 0; }
+    body[data-layout="duo"] .start { position: absolute; inset: 0; overflow-y: auto; scrollbar-width: none;
+                                     padding: max(env(safe-area-inset-top), 4px) 16px 48px; }
+    body[data-layout="duo"] .sheet { position: absolute; }
     body[data-layout="duo"] .screen2 { display: block; }
     body[data-layout="duo"] .to-apps, body[data-layout="duo"] #to-start { display: none; }
     body[data-layout="duo"] .apps { position: absolute; inset: 0; transform: none; visibility: visible; transition: none; padding: 0 16px 48px; }
     body[data-layout="duo"] .viewer.open { display: flex; flex-direction: column; position: absolute; inset: 0; z-index: 4; background: #000; }
   }
+
+  /* 设置页：Windows Phone 枢轴。分区在 settingsSections()，以后加一项即可。
+     电脑上铺满窗口；手机外框和双屏里改成绝对定位，盖住左边那块屏幕（见下面的 media）。 */
+  body:has(#settings.open) { overflow: hidden; }
+  .sheet { position: fixed; inset: 0; z-index: 5; background: #000; color: var(--fg); overflow-y: auto; container-type: inline-size;
+           scrollbar-width: none; overscroll-behavior: contain; transform: translateX(100%); visibility: hidden;
+           transition: transform .45s var(--metro), visibility 0s .45s; }
+  .sheet::-webkit-scrollbar { display: none; }
+  .sheet.open { transform: none; visibility: visible; transition: transform .45s var(--metro); }
+  .sheet-head { position: sticky; top: 0; z-index: 1; display: flex; align-items: center; gap: 12px; background: #000;
+                padding: max(env(safe-area-inset-top), 12px) max(16px, env(safe-area-inset-right), calc(50% - 360px)) 10px max(16px, env(safe-area-inset-left), calc(50% - 360px)); }
+  .pivots { position: relative; flex: 1; min-width: 0; display: flex; gap: clamp(12px, 3.5cqi, 20px); overflow-x: auto; scrollbar-width: none; }
+  .pivots::-webkit-scrollbar { display: none; }
+  .pivots button { flex: none; font: 300 clamp(22px, 6.2cqi, 46px)/1 var(--font); color: oklch(0.45 0 0);
+                   text-transform: lowercase; padding: 4px 0; }
+  .pivots button[aria-selected="true"] { color: #fff; }
+  #settings-body { padding: 8px max(16px, env(safe-area-inset-right), calc(50% - 360px)) max(32px, env(safe-area-inset-bottom)) max(16px, env(safe-area-inset-left), calc(50% - 360px)); }
+  .opt { display: flex; align-items: center; gap: 12px; width: 100%; min-height: 56px; text-align: left;
+         padding: 14px 2px; border-bottom: 1px solid oklch(1 0 0 / 0.12); }
+  .opt-label { font: 300 24px/1.2 var(--font); }
+  .opt .tick { width: 22px; height: 22px; margin-left: auto; flex: none; visibility: hidden;
+               fill: none; stroke: currentColor; stroke-width: 2.4; stroke-linecap: round; stroke-linejoin: round; }
+  .opt[aria-selected="true"] .tick { visibility: visible; }
+  @media (hover: hover) { .opt:hover { background: oklch(1 0 0 / 0.05); } }
+  .about-hero { margin: 0; padding: 14px 2px 0; font: 300 clamp(32px, 8vw, 44px)/1.1 var(--font); }
+  .about-demo { margin: 8px 2px 0; color: var(--fg-2); font-size: 14px; }
+  .about-row { padding: 18px 2px; border-bottom: 1px solid oklch(1 0 0 / 0.12); }
+  .about-row .k { font: 600 12px/1 var(--font); letter-spacing: .06em; text-transform: uppercase; color: var(--fg-2); }
+  .about-row .v { font: 300 24px/1.25 var(--font); margin-top: 6px; overflow-wrap: anywhere; }
+  #settings-body.in { animation: sheet-in .28s var(--metro); }
+  @keyframes sheet-in { from { opacity: 0; transform: translateY(8px); } }
 
   @media (prefers-reduced-motion: reduce) {
     *, *::before, *::after { animation: none !important; transition: none !important; }
@@ -221,11 +260,23 @@
 <body>
 <div class="device">
 <div class="wrap">
-  <div class="tray"><span id="tray-l"></span><span class="tray-r"><select id="device"><option value="auto"></option><option value="phone"></option><option value="duo"></option></select><button id="lang"></button><b id="clock"></b></span></div>
-  <main id="main" class="groups" aria-busy="true">
-    <div class="group"><div class="grid"><div class="tile w skel"></div><div class="tile m skel"></div></div></div>
-  </main>
-  <button class="to-apps" id="to-apps"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 12h15M13 6l6 6-6 6"/></svg></button>
+  <div class="start" id="start">
+    <div class="tray"><span id="tray-l"></span><span class="tray-r"><select id="device"><option value="auto"></option><option value="phone"></option><option value="duo"></option></select><b id="clock"></b></span></div>
+    <main id="main" class="groups" aria-busy="true">
+      <div class="group"><div class="grid"><div class="tile w skel"></div><div class="tile m skel"></div></div></div>
+    </main>
+    <div class="appbar">
+      <button type="button" class="round" id="to-settings"><svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 1 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-4 0v-.09a1.65 1.65 0 0 0-1.09-1.51 1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 1 1-2.83-2.83l.06-.06A1.65 1.65 0 0 0 4.68 15a1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 1 1 2.83-2.83l.06.06A1.65 1.65 0 0 0 9 4.68a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 1 1 2.83 2.83l-.06.06A1.65 1.65 0 0 0 19.4 9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z"/></svg></button>
+      <button type="button" class="round to-apps" id="to-apps"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 12h15M13 6l6 6-6 6"/></svg></button>
+    </div>
+  </div>
+  <section id="settings" class="sheet" aria-hidden="true">
+    <div class="sheet-head">
+      <button type="button" class="round" id="set-back"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M20 12H5M11 6l-6 6 6 6"/></svg></button>
+      <div class="pivots" id="pivots" role="tablist"></div>
+    </div>
+    <div id="settings-body" role="tabpanel"></div>
+  </section>
 </div>
 <div class="screen2">
 <nav class="apps" id="apps">
@@ -252,7 +303,7 @@ if (!location.pathname.endsWith('/') && !location.pathname.endsWith('.html')) {
 
 const $ = id => document.getElementById(id);
 
-// ── 界面文案：?lang= > 右上角切换（存在本浏览器）> data.json 的 lang > 英文 ──
+// ── 界面文案：?lang= > 设置里的选择（存在本浏览器）> data.json 的 lang > 英文 ──
 const I18N = {
   en: {
     offline: 'Offline', unreachable: 'Unreachable', online: 'Online',
@@ -267,7 +318,9 @@ const I18N = {
     retry: 'Reload', demo: 'Demo · fake tailnet',
     allApps: 'All services', backToStart: 'Back to Start', device: 'Show as', devices_: { auto: 'Auto', phone: 'Phone', duo: 'Dual screen' },
     openTab: 'Open in a new tab', noFrame: 'This service doesn’t allow being shown inside another page.',
-    mixed: 'This http service can’t be shown inside an https page. Open the home page at its http address to see it here.', other_lang: '中文', switchTo: '切换到中文',
+    mixed: 'This http service can’t be shown inside an https page. Open the home page at its http address to see it here.',
+    settings: 'Settings', settingsLang: 'language', settingsDisplay: 'display', settingsAbout: 'about',
+    aboutTailnet: 'tailnet',
     allOnline: n => `All ${n} devices online`, more: n => `+${n} more`,
     svcUnit: 'services', nDown: n => `${n} unreachable`, allUp: 'All reachable',
   },
@@ -284,30 +337,37 @@ const I18N = {
     retry: '重新加载', demo: '演示 · 虚构数据',
     allApps: '全部服务', backToStart: '返回开始屏幕', device: '显示为', devices_: { auto: '自动', phone: '手机', duo: '双屏' },
     openTab: '在新标签页打开', noFrame: '这个服务不允许在别的页面里显示。',
-    mixed: '这是 http 服务，https 页面里无法显示。用主页的 http 地址打开就能在这里看到。', other_lang: 'EN', switchTo: 'Switch to English',
+    mixed: '这是 http 服务，https 页面里无法显示。用主页的 http 地址打开就能在这里看到。',
+    settings: '设置', settingsLang: '语言', settingsDisplay: '显示', settingsAbout: '关于',
+    aboutTailnet: 'tailnet',
     allOnline: n => `${n} 台设备全部在线`, more: n => `还有 ${n} 台`,
     svcUnit: '个服务', nDown: n => `${n} 个不可达`, allUp: '全部可达',
   },
 };
 const pickLang = pref => /^zh/i.test(pref || '') ? 'zh' : pref ? 'en' : null;
 let T;
-function setLang(dataLang) {
-  let saved = null;
-  try { saved = localStorage.getItem('tsh-lang'); } catch {}
-  const lang = pickLang(new URLSearchParams(location.search).get('lang')) || pickLang(saved) || pickLang(dataLang) || 'en';
+let lang = 'en';
+function applyLang(code) {
+  lang = code === 'zh' ? 'zh' : 'en';
   T = I18N[lang];
   document.documentElement.lang = lang === 'zh' ? 'zh-CN' : 'en';
   $('to-apps').setAttribute('aria-label', T.allApps);
-  $('lang').textContent = T.other_lang;
+  $('to-settings').setAttribute('aria-label', T.settings);
   $('device').setAttribute('aria-label', T.device);
   $('device').title = T.device;
   for (const o of $('device').options) o.textContent = T.devices_[o.value];
-  $('lang').setAttribute('aria-label', T.switchTo);
   $('apps').setAttribute('aria-label', T.allApps);
   $('apps-title').textContent = T.allApps;
   $('to-start').setAttribute('aria-label', T.backToStart);
+  $('set-back').setAttribute('aria-label', T.backToStart);
+  $('settings').setAttribute('aria-label', T.settings);
   $('viewer-close').setAttribute('aria-label', T.backToStart);
   $('viewer-ext').setAttribute('aria-label', T.openTab);
+}
+function setLang(dataLang) {
+  let saved = null;
+  try { saved = localStorage.getItem('tsh-lang'); } catch {}
+  applyLang(pickLang(new URLSearchParams(location.search).get('lang')) || pickLang(saved) || pickLang(dataLang) || 'en');
 }
 setLang();
 // 按什么设备显示：?device= > 本浏览器记住的选择 > auto；窄屏上 CSS 不生效，始终是手机
@@ -322,27 +382,93 @@ function setDevice(name) {
   const asked = new URLSearchParams(location.search).get('device');
   setDevice(DEVICES.includes(asked) ? asked : DEVICES.includes(saved) ? saved : 'auto');
 }
-$('device').addEventListener('change', e => {
-  try { localStorage.setItem('tsh-device', e.target.value); } catch {}
+function chooseDevice(name) {
+  if (!DEVICES.includes(name) || name === document.body.dataset.layout) return;
+  try { localStorage.setItem('tsh-device', name); } catch {}
   const url = new URL(location.href);
   if (url.searchParams.has('device')) { url.searchParams.delete('device'); history.replaceState(history.state, '', url); }
-  setDevice(e.target.value);
+  setDevice(name);
   closeViewer();
   if (state.data) turnstile($('main'));
-});
+  if ($('settings').classList.contains('open')) renderSettings();
+}
+$('device').addEventListener('change', e => chooseDevice(e.target.value));
 
-function switchLang() {
-  const next = document.documentElement.lang === 'en' ? 'zh' : 'en';
+function chooseLang(next) {
+  if (next !== 'en' && next !== 'zh') return;
   try { localStorage.setItem('tsh-lang', next); } catch {}
   // 地址栏里的 ?lang= 优先级更高，切换后去掉，否则切不过去
   const url = new URL(location.href);
-  if (url.searchParams.has('lang')) { url.searchParams.delete('lang'); history.replaceState(history.state, '', url); }
-  setLang(state.data?.lang);
+  const hadQuery = url.searchParams.has('lang');
+  if (hadQuery) { url.searchParams.delete('lang'); history.replaceState(history.state, '', url); }
+  if (next === lang && !hadQuery) return;
+  applyLang(next);
   if (state.data) { state.animate = false; render(); }
+  if ($('settings').classList.contains('open')) renderSettings();
+}
+
+// 设置页的分区。以后加选项：往这个数组里加一项 { id, title, body } 即可。
+const TICK = '<svg class="tick" viewBox="0 0 24 24" aria-hidden="true"><path d="M5 12.5 10 17.5 19 7"/></svg>';
+function optionList(kind, label, items, current) {
+  return `<div role="listbox" aria-label="${esc(label)}">${items.map(([id, name]) =>
+    `<button type="button" class="opt" role="option" data-set="${kind}" data-value="${esc(id)}" aria-selected="${id === current}">
+      <span class="opt-label">${esc(name)}</span>${TICK}</button>`).join('')}</div>`;
+}
+function settingsSections() {
+  const d = state.data;
+  const about = d
+    ? `<h2 class="about-hero">${esc(d.title || '')}</h2>${d.demo ? `<p class="about-demo">${esc(T.demo)}</p>` : ''}
+       <div class="about-row"><div class="k">${esc(T.aboutTailnet)}</div><div class="v">${esc(d.tailnet || '')}</div></div>`
+    : '';
+  return [
+    { id: 'language', title: T.settingsLang, body: optionList('lang', T.settingsLang, [['en', 'English'], ['zh', '中文']], lang) },
+    { id: 'display', title: T.settingsDisplay, body: optionList('device', T.device, DEVICES.map(id => [id, T.devices_[id]]), document.body.dataset.layout) },
+    { id: 'about', title: T.settingsAbout, body: about },
+  ];
+}
+function syncSettings(open) {
+  const el = $('settings');
+  const was = el.classList.contains('open');
+  el.classList.toggle('open', open);
+  el.setAttribute('aria-hidden', open ? 'false' : 'true');
+  $('start').inert = open;
+  if (was && !open) $('to-settings').focus();
+}
+function renderSettings() {
+  const sections = settingsSections();
+  if (!sections.some(s => s.id === state.pivot)) state.pivot = sections[0].id;
+  $('pivots').innerHTML = sections.map(s =>
+    `<button type="button" role="tab" id="pivot-${s.id}" data-pivot="${s.id}" aria-selected="${s.id === state.pivot}" aria-controls="settings-body">${esc(s.title)}</button>`).join('');
+  const body = $('settings-body');
+  body.innerHTML = sections.find(s => s.id === state.pivot).body;
+  body.setAttribute('aria-labelledby', `pivot-${state.pivot}`);
+  body.classList.remove('in');
+  void body.offsetWidth;
+  body.classList.add('in');
+  const tab = document.getElementById(`pivot-${state.pivot}`);
+  const row = $('pivots');
+  if (tab) row.scrollLeft = tab.offsetLeft;
+}
+function openSettings(open) {
+  const el = $('settings');
+  if (open === el.classList.contains('open')) return;
+  syncSettings(open);
+  if (open) {
+    renderSettings();
+    el.scrollTop = 0;
+    if (!history.state?.settings) history.pushState({ settings: 1 }, '');
+    $('set-back').focus();
+  } else if (history.state?.settings) history.back();
+}
+// 刷新时设置页是关着的，但浏览器可能还留着上次的 history.state，清掉以免返回时又被打开
+if (history.state?.settings) {
+  const next = { ...history.state };
+  delete next.settings;
+  history.replaceState(Object.keys(next).length ? next : null, '');
 }
 const OTHER = '\0other';   // 未打标签的服务排在最后
 // engaged：用户按过方向键之后才显示选中框
-const state = { data: null, device: null, sel: 0, animate: true, engaged: false, showOffline: false };
+const state = { data: null, device: null, sel: 0, animate: true, engaged: false, showOffline: false, pivot: 'language' };
 const usage = (() => { try { return JSON.parse(localStorage.getItem('tsh-usage') || '{}'); } catch { return {}; } })();
 const PALETTE = ['cobalt', 'emerald', 'crimson', 'teal', 'magenta', 'orange', 'indigo', 'brown', 'mauve', 'violet', 'olive'];
 
@@ -631,7 +757,8 @@ function openApps(open) {
   else if (history.state?.apps) history.back();
 }
 addEventListener('popstate', () => {
-  $('apps').classList.remove('open');
+  $('apps').classList.toggle('open', !!history.state?.apps);
+  syncSettings(!!history.state?.settings);
   if (!history.state?.viewer) { $('viewer').classList.remove('open'); $('viewer-body').innerHTML = ''; }
 });
 
@@ -642,8 +769,8 @@ addEventListener('popstate', () => {
   const release = () => { apps.style.transform = apps.style.transition = apps.style.visibility = ''; };
   addEventListener('touchstart', e => {
     const t = e.touches[0];
-    // 屏幕左缘留给浏览器自己的返回手势
-    axis = !phone.matches || e.touches.length > 1 || t.clientX < 24 ? 'none' : null;
+    // 设置页自己处理左右滑；屏幕左缘留给浏览器的返回手势
+    axis = $('settings').classList.contains('open') || !phone.matches || e.touches.length > 1 || t.clientX < 24 ? 'none' : null;
     x0 = t.clientX; y0 = t.clientY; t0 = e.timeStamp; dx = 0;
   }, { passive: true });
   addEventListener('touchmove', e => {
@@ -668,6 +795,35 @@ addEventListener('popstate', () => {
     if (Math.abs(dx) > innerWidth * 0.3 || flick) openApps(!apps.classList.contains('open'));
   });
   addEventListener('touchcancel', () => { axis = 'none'; release(); });
+})();
+
+// 设置页里左右滑切换枢轴（语言 / 显示 / 关于），竖滑仍是滚动
+(() => {
+  const el = $('settings');
+  let x0, y0, axis;
+  el.addEventListener('touchstart', e => {
+    const t = e.touches[0];
+    axis = e.target.closest('.pivots') || e.touches.length > 1 || t.clientX < 24 ? 'none' : null;
+    x0 = t.clientX; y0 = t.clientY;
+  }, { passive: true });
+  el.addEventListener('touchmove', e => {
+    if (axis !== null) return;
+    const mx = e.touches[0].clientX - x0, my = e.touches[0].clientY - y0;
+    if (Math.hypot(mx, my) < 12) return;
+    axis = Math.abs(mx) > Math.abs(my) * 1.4 ? 'x' : 'none';
+  }, { passive: true });
+  el.addEventListener('touchend', e => {
+    if (axis !== 'x') { axis = 'none'; return; }
+    const dx = e.changedTouches[0].clientX - x0;
+    axis = 'none';
+    if (Math.abs(dx) < 48) return;
+    const ids = settingsSections().map(s => s.id);
+    const i = ids.indexOf(state.pivot);
+    const n = dx < 0 ? i + 1 : i - 1;
+    if (!ids[n]) return;
+    state.pivot = ids[n];
+    renderSettings();
+  });
 })();
 
 // ── 动态磁贴：随机挑一块带背面的磁贴向上滑出，几秒后滑回 ──
@@ -765,10 +921,19 @@ function select(i) {
 }
 
 document.addEventListener('click', e => {
+  if (e.target.closest('#to-settings')) { openSettings(true); return; }
+  if (e.target.closest('#set-back')) { openSettings(false); return; }
+  const tab = e.target.closest('[data-pivot]');
+  if (tab) { state.pivot = tab.dataset.pivot; renderSettings(); return; }
+  const opt = e.target.closest('[data-set]');
+  if (opt) {
+    if (opt.dataset.set === 'lang') chooseLang(opt.dataset.value);
+    else if (opt.dataset.set === 'device') chooseDevice(opt.dataset.value);
+    return;
+  }
   if (e.target.closest('#to-apps')) { openApps(true); return; }
   if (e.target.closest('#to-start')) { openApps(false); return; }
   if (e.target.closest('#viewer-close')) { closeViewer(); return; }
-  if (e.target.closest('#lang')) { switchLang(); return; }
   const app = e.target.closest('[data-app]');
   if (app && !e.metaKey && !e.ctrlKey && e.button === 0) { e.preventDefault(); go(app.dataset.app, false); return; }
   if (e.target.closest('#more')) { state.showOffline = !state.showOffline; refresh(); return; }
@@ -781,7 +946,16 @@ document.addEventListener('click', e => {
 });
 
 document.addEventListener('keydown', e => {
+  if (!(e.target instanceof Element)) return;
   if (e.target.closest('select')) return;   // 设备下拉框自己处理方向键
+  if ($('settings').classList.contains('open')) {
+    if (e.key === 'Escape') { openSettings(false); return; }
+    const ids = settingsSections().map(s => s.id);
+    const i = ids.indexOf(state.pivot);
+    if (e.key === 'ArrowRight' && ids[i + 1]) { e.preventDefault(); state.pivot = ids[i + 1]; renderSettings(); }
+    else if (e.key === 'ArrowLeft' && ids[i - 1]) { e.preventDefault(); state.pivot = ids[i - 1]; renderSettings(); }
+    return;
+  }
   if (e.key === 'Escape' && $('viewer').classList.contains('open')) { closeViewer(); return; }
   if (e.key === 'Escape' && $('apps').classList.contains('open')) { openApps(false); return; }
   if (e.key === 'Escape') { state.device = null; state.sel = 0; refresh(); return; }
@@ -806,6 +980,7 @@ function load() {
         `<i class="${i <= bars ? 'on' : ''}" style="height:${i * 20}%"></i>`).join('')}</span>${esc(data.tailnet)}`;
       loadState();
       render();
+      if ($('settings').classList.contains('open')) renderSettings();
       setInterval(() => { state.animate = false; render(); }, 60000);   // 刷新「扫描于」时间
       setInterval(livePeek, 2600);
       setInterval(liveOverview, 4500);
