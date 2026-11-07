@@ -287,7 +287,7 @@ def load_app(d, now):
         "url": url(entry) if entry else None, "size": tile.get("size") if tile.get("size") in ("s", "m", "w") else "m",
         "embed": m.get("embed", True) is not False, "kind": "app",
     }
-    for key in ("name_i18n", "description", "glyph", "producer", "category"):
+    for key in ("name_i18n", "description", "glyph", "producer"):
         if m.get(key):
             app[key] = m[key]
     if m.get("icon"):

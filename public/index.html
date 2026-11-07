@@ -169,33 +169,6 @@
   .groups { display: flex; flex-direction: column; gap: var(--g); margin-top: 12px; }
   .grid { --c: var(--accent) !important; }
   .note { grid-column: 1 / -1; grid-row: span 3; }
-  .group-hd { display: flex; align-items: baseline; justify-content: space-between; gap: 10px;
-              padding: 6px 2px 6px; border-top: 1px solid oklch(1 0 0 / 0.18); }
-  .group-hd h2 { margin: 0; font: 600 13px/1.2 var(--font); letter-spacing: .04em; color: var(--fg);
-                 display: inline-flex; align-items: center; gap: 7px; }
-  .group-hd h2::before { content: ""; width: 8px; height: 8px; background: var(--c, var(--accent)); flex: none; }
-  .group-hd span { font-size: 12px; color: var(--fg-2); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
-  /* Folders use the same two-unit tile size as an application. */
-  .folder-grid { display: grid; grid-template-columns: repeat(var(--cols), var(--u)); gap: var(--g); margin-top: 14px; }
-  .folder-tile { grid-column: span 2; height: calc(2 * var(--u) + var(--g)); text-align: left; }
-  .folder-tile[aria-expanded="true"] { box-shadow: inset 0 -4px 0 var(--fg); }
-  .folder-preview { position: absolute; inset: 15px 18px 37px; display: grid; grid-template-columns: repeat(2, 1fr); grid-template-rows: repeat(2, 1fr); gap: 10px; }
-  .folder-preview > span { display: grid; place-items: center; min-width: 0; min-height: 0; }
-  .folder-preview svg, .folder-preview img { width: 30px; height: 30px; object-fit: contain; }
-  .folder-preview svg { fill: none; stroke: currentColor; stroke-width: 1.6; stroke-linecap: round; stroke-linejoin: round; }
-  .folder-preview .ch { font: 300 27px/1 var(--font); }
-  .folder-panel { grid-column: 1 / -1; min-width: 0; padding: 10px 0 16px; animation: folder-open .2s var(--metro); }
-  .folder-panel-head { display: flex; align-items: center; justify-content: space-between; gap: 12px; padding: 0 0 12px; }
-  .folder-panel-head h2 { margin: 0; font: 300 22px/1.2 var(--font); }
-  .folder-close { padding: 8px 4px 8px 16px; color: var(--fg-2); font-size: 13px; }
-  .folder-tools { margin-top: 18px; text-align: right; font-size: 12px; color: var(--fg-2); }
-  .network-strip { margin-top: 24px; padding-top: 12px; }
-  .network-strip summary { cursor: pointer; color: var(--fg-2); font-size: 13px; }
-  .network-strip summary strong { color: var(--fg); font-weight: 400; margin-right: 12px; }
-  .network-strip .grid { margin-top: 14px; }
-  @keyframes folder-open { from { opacity: 0; transform: translateY(-8px); } }
-  @media (prefers-reduced-motion: reduce) { .folder-panel { animation: none; } }
-
   /* 转门动画：磁贴绕屏幕左缘翻入，origin 由脚本按位置设置 */
   .tile.turn { animation: turnstile .55s var(--metro) backwards; }
   @keyframes turnstile { from { opacity: 0; transform: perspective(900px) rotateY(-80deg); } }
@@ -348,9 +321,6 @@ const $ = id => document.getElementById(id);
 // ── 界面文案：?lang= > 设置里的选择（存在本浏览器）> data.json 的 lang > 英文 ──
 const I18N = {
   en: {
-    closeFolder: 'Close folder',
-    classicView: 'Tile view', network: 'Devices & network',
-    categories: { develop: 'AI & development', learn: 'Learning & knowledge', create: 'Creating & writing', life: 'Life & media', finance: 'Money & assets', system: 'Systems & operations', other: 'Other' },
     offline: 'Offline', unreachable: 'Unreachable', online: 'Online',
     collapse: 'Hide', justNow: 'just now', min: m => `${m} min ago`, hr: h => `${h} h ago`, day: d => `${d} d ago`,
     lastSeen: t => `, last seen ${t}`, onlineOf: n => `/ ${n} online`, scanned: t => `Scanned ${t}`,
@@ -375,9 +345,6 @@ const I18N = {
     dNoTile: 'no tile data', dProbe: 'with port probing',
   },
   zh: {
-    closeFolder: '收起文件夹',
-    classicView: '原磁贴视图', network: '设备与网络',
-    categories: { develop: 'AI 与开发', learn: '学习与知识', create: '创作与表达', life: '生活与媒体', finance: '财务与资产', system: '系统与运维', other: '其他' },
     offline: '离线', unreachable: '不可达', online: '在线',
     collapse: '收起', justNow: '刚刚', min: m => `${m} 分钟前`, hr: h => `${h} 小时前`, day: d => `${d} 天前`,
     lastSeen: t => `，最后出现于 ${t}`, onlineOf: n => `/ ${n} 台在线`, scanned: t => `扫描于 ${t}`,
@@ -447,7 +414,7 @@ function chooseDevice(name) {
   if (url.searchParams.has('device')) { url.searchParams.delete('device'); history.replaceState(history.state, '', url); }
   setDevice(name);
   closeViewer();
-  if (state.data) refresh();
+  if (state.data) turnstile($('main'));
   if ($('settings').classList.contains('open')) renderSettings();
 }
 $('device').addEventListener('change', e => chooseDevice(e.target.value));
@@ -567,7 +534,7 @@ if (history.state?.settings || history.state?.section) {
 }
 const OTHER = '\0other';   // 未打标签的服务排在最后
 // engaged：用户按过方向键之后才显示选中框
-const state = { data: null, device: null, sel: 0, animate: true, engaged: false, showOffline: false, section: null, openFolder: null };
+const state = { data: null, device: null, sel: 0, animate: true, engaged: false, showOffline: false, section: null };
 const usage = (() => { try { return JSON.parse(localStorage.getItem('tsh-usage') || '{}'); } catch { return {}; } })();
 const PALETTE = ['cobalt', 'emerald', 'crimson', 'teal', 'magenta', 'orange', 'indigo', 'brown', 'mauve', 'violet', 'olive'];
 
@@ -778,7 +745,6 @@ function deviceTiles() {
 // 首字母磁贴：跳过开头的标点和符号，如「《住宅项目规范》」取「住」
 const initial = name => ([...name.trim()].find(c => /[\p{L}\p{N}]/u.test(c)) || '?').toUpperCase();
 const selCls = i => state.engaged && i === state.sel ? ' sel' : '';
-const colorStyle = c => c && [...PALETTE, 'steel'].includes(c) ? ` style="--c:var(--${c})"` : '';
 
 function markTile(b, size = 's') {
   // 网站图标常带不透明底色，转成剪影会变成白方块，所以统一用细体首字母
@@ -816,93 +782,8 @@ function pinnedTiles(pins, list) {
   }).join('');
 }
 
-// A category can be set explicitly on a service/bookmark/app. Names provide a
-// fallback for older data; unrecognized entries remain visible under Other.
-const CONTENT_CATEGORIES = [
-  ['develop', 'cobalt', /gitea|gitlab|forgejo|gist|ollama|open webui|nvidia|nim\b|kimi|zenmux|minimax|mimo|nemoclaw|agents?|百炼|方舟|开发|代码|\bai\b|cloud console/i],
-  ['learn', 'teal', /word atlas|lexicon|qwerty|learner|courses?|coding|wiki|documentation|学习|知识|词光|小林|阅读/i],
-  ['create', 'magenta', /content studio|resume|creator|writing|创作|简历|写作/i],
-  ['life', 'emerald', /immich|cloudreve|jellyfin|plex|teslamate|home assistant|photo|media|entertainment|影音|电影|相册|生活|住宅/i],
-  ['finance', 'orange', /ledger|crypto|finance|fund|账本|资产|财经|基金|同花顺/i],
-  ['system', 'steel', /grafana|prometheus|panel|minio|monitor|uptime|pi-hole|tailscale|portainer|monitoring|运维|监控|存储/i],
-];
-function contentCategory(item) {
-  const keys = [...CONTENT_CATEGORIES.map(([key]) => key), 'other'];
-  if (keys.includes(item.category)) return item.category;
-  // A specific application name takes precedence over broad legacy tags.
-  for (const text of [item.name, [item.group, ...(item.tags || [])].filter(Boolean).join(' ')]) {
-    const match = CONTENT_CATEGORIES.find(([, , rule]) => rule.test(text || ''));
-    if (match) return match[0];
-  }
-  return 'other';
-}
-function contentEntries(list) {
-  return [
-    ...list.map(item => ({ kind: 'service', item })),
-    ...(state.data.apps || []).map(item => ({ kind: 'app', item })),
-    ...(state.data.bookmarks || []).map(item => ({ kind: item.kind === 'note' ? 'note' : 'bookmark', item })),
-  ];
-}
-function contentTile(entry, size) {
-  return entry.kind === 'service' ? svcTile(entry.item, size)
-    : entry.kind === 'app' ? appTile(entry.item, size)
-    : entry.kind === 'note' ? noteTile(entry.item, size) : markTile(entry.item, size);
-}
-function folderTile(key, items) {
-  const i = n++;
-  const open = state.openFolder === key;
-  const icons = items.slice(0, 4).map(({ kind, item }) => kind === 'app' ? appIcon(item)
-    : kind === 'service' ? svg(glyphOf(item))
-    : item.glyph ? svg(item.glyph) : `<span class="ch">${esc(initial(item.name))}</span>`);
-  return `<button type="button" class="tile folder-tile${selCls(i)}" data-folder="${key}" data-nav data-i="${i}"
-    aria-expanded="${open}"${open ? ` aria-controls="folder-${key}"` : ''} aria-label="${T.categories[key]}">
-    <span class="folder-preview" aria-hidden="true">${icons.map(icon => `<span>${icon}</span>`).join('')}</span>
-    <span class="lbl">${T.categories[key]}</span><span class="badge">${items.length}</span></button>`;
-}
-function librarySections(list, networkOpen) {
-  const groups = new Map();
-  for (const entry of contentEntries(list)) {
-    const key = contentCategory(entry.item);
-    if (!groups.has(key)) groups.set(key, []);
-    groups.get(key).push(entry);
-  }
-  const keys = [...CONTENT_CATEGORIES.map(([key]) => key), 'other'].filter(key => groups.has(key));
-  const perRow = Math.max(1, Math.floor(Number(getComputedStyle($('main')).getPropertyValue('--cols')) / 2) || 3);
-  let html = '<div class="folder-grid">';
-  for (let row = 0; row < keys.length; row += perRow) {
-    const rowKeys = keys.slice(row, row + perRow);
-    html += rowKeys.map(key => folderTile(key, groups.get(key))).join('');
-    if (rowKeys.includes(state.openFolder)) {
-      const key = state.openFolder;
-      html += `<section class="folder-panel" id="folder-${key}" aria-label="${T.categories[key]}">
-        <header class="folder-panel-head"><h2>${T.categories[key]}</h2><button type="button" class="folder-close" data-folder="${key}">${T.closeFolder} ↑</button></header>
-        <div class="grid">${groups.get(key).map(e => contentTile(e, e.item.live?.length ? 'w' : ['service', 'app', 'note'].includes(e.kind) ? 'm' : 's')).join('')}</div></section>`;
-    }
-  }
-  const classic = new URL(location.href); classic.searchParams.set('view', 'classic');
-  html += `</div><div class="folder-tools"><a href="${esc(classic.pathname + classic.search)}">${T.classicView} ↗</a></div>`;
-  const online = state.data.devices.filter(d => d.online).length;
-  html += `<details class="network-strip"${networkOpen ? ' open' : ''}><summary><strong>${T.network}</strong>${online} ${T.onlineOf(state.data.devices.length)}</summary><div class="grid">${overviewTile()}${deviceTiles()}</div></details>`;
-  return html;
-}
-function toggleFolder(key) {
-  state.openFolder = state.openFolder === key ? null : key;
-  state.engaged = false;
-  refresh();
-  const tile = $('main').querySelector(`[data-folder="${key}"]`);
-  tile?.focus({ preventScroll: true });
-  if (state.openFolder) tile?.scrollIntoView({ block: 'nearest', behavior: 'auto' });
-}
-// Reflow expanded content after its folder's row at every screen size.
-let folderResize;
-addEventListener('resize', () => {
-  clearTimeout(folderResize);
-  folderResize = setTimeout(() => { if (state.data && state.openFolder) refresh(); }, 100);
-});
-
 function render() {
   const main = $('main');
-  const networkOpen = !!main.querySelector('.network-strip[open]');
   main.removeAttribute('aria-busy');
   n = 0;
   const list = services();
@@ -916,12 +797,9 @@ function render() {
   const host = notes.length && groups.find(([name]) => name === notes[0].group);
   const pins = !state.device && Array.isArray(state.data.start) ? state.data.start : null;
 
-  const view = new URLSearchParams(location.search).get('view');
-  const library = !state.device && view !== 'classic' && (!pins || view === 'library');
+  // 和 WP 开始屏幕一样没有分组标题：设备一块网格，其余磁贴按组的顺序连成另一块
   let rest = '';
-  if (library) {
-    rest = librarySections(list, networkOpen);
-  } else if (pins) {
+  if (pins) {
     rest = pinnedTiles(pins, list);
   } else {
     if (!state.device) rest += (state.data.apps || []).map(a => appTile(a)).join('');
@@ -933,7 +811,7 @@ function render() {
     });
     marks.forEach(([, items]) => { rest += items.map(b => markTile(b)).join(''); });
   }
-  main.innerHTML = library ? rest : `<section class="group"><div class="grid">${overviewTile()}${deviceTiles()}</div></section>`
+  main.innerHTML = `<section class="group"><div class="grid">${overviewTile()}${deviceTiles()}</div></section>`
     + (rest ? `<section class="group"><div class="grid">${rest}</div></section>` : '');
   state.sel = Math.min(state.sel, Math.max(n - 1, 0));
   if (state.animate) turnstile(main);
@@ -1120,13 +998,10 @@ function select(i) {
   state.engaged = true;
   state.sel = Math.max(0, Math.min(items.length - 1, i));
   items.forEach((el, j) => el.classList.toggle('sel', j === state.sel));
-  items[state.sel].focus({ preventScroll: true });
   items[state.sel].scrollIntoView({ block: 'nearest', inline: 'nearest' });
 }
 
 document.addEventListener('click', e => {
-  const folder = e.target.closest('[data-folder]');
-  if (folder) { e.preventDefault(); toggleFolder(folder.dataset.folder); return; }
   if (e.target.closest('#to-settings')) { openSettings(true); return; }
   if (e.target.closest('#set-back')) {
     if (state.section) history.back();
@@ -1167,17 +1042,12 @@ document.addEventListener('keydown', e => {
   }
   if (e.key === 'Escape' && $('viewer').classList.contains('open')) { closeViewer(); return; }
   if (e.key === 'Escape' && $('apps').classList.contains('open')) { openApps(false); return; }
-  if (e.key === 'Escape' && state.openFolder && !state.device) { e.preventDefault(); toggleFolder(state.openFolder); return; }
   if (e.key === 'Escape') { state.device = null; state.sel = 0; refresh(); return; }
   const move = { ArrowDown: 1, ArrowUp: -1, ArrowRight: 1, ArrowLeft: -1 }[e.key];
   if (move) { e.preventDefault(); select(state.sel + move); return; }
   if (e.key === 'Enter' && document.activeElement === document.body) {
     const items = document.querySelectorAll('[data-nav]');
-    if (items[state.sel]) {
-      e.preventDefault();
-      if (items[state.sel].dataset.folder) toggleFolder(items[state.sel].dataset.folder);
-      else go(items[state.sel].dataset.url, e.metaKey || e.ctrlKey);
-    }
+    if (items[state.sel]) { e.preventDefault(); go(items[state.sel].dataset.url, e.metaKey || e.ctrlKey); }
   }
 });
 
