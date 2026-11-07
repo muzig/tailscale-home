@@ -101,6 +101,10 @@
   .tile.s .glyph img { width: 46%; height: 46%; }
   .tile.w .glyph img { width: 19%; height: 38%; }
 
+  .mark-summary { position: absolute; inset: 12px 12px 30px; display: flex; flex-direction: column; justify-content: center; gap: 8px; }
+  .mark-summary p { margin: 0; font: 300 22px/1.15 var(--font); }
+  .mark-summary span { font-size: 12px; line-height: 1.3; }
+
   /* 总览宽磁贴 */
   .ov { padding: 10px 12px; display: flex; flex-direction: column; }
   .ov.live { padding: 0; }
@@ -772,12 +776,14 @@ const initial = name => ([...name.trim()].find(c => /[\p{L}\p{N}]/u.test(c)) || 
 const selCls = i => state.engaged && i === state.sel ? ' sel' : '';
 
 function markTile(b, size = 's') {
-  // 网站图标常带不透明底色，转成剪影会变成白方块，所以统一用细体首字母
   const i = n++;
+  const lines = size !== 's' && Array.isArray(b.lines) ? b.lines.slice(0, 3) : [];
+  const body = lines.length
+    ? `<div class="mark-summary"><p>${esc(lines[0])}</p>${lines.slice(1).map(line => `<span>${esc(line)}</span>`).join('')}</div>`
+    : `<div class="glyph">${b.glyph ? svg(b.glyph) : `<span class="ch">${esc(initial(b.name))}</span>`}</div>`;
   return `<a class="tile ${size}${selCls(i)}" data-nav data-i="${i}" href="${esc(b.url)}" data-url="${esc(b.url)}"
              title="${esc(b.note ? `${b.name}\n${b.note}` : b.name)}" aria-label="${esc(b.name)}">
-    <div class="glyph"><span class="ch">${esc(initial(b.name))}</span></div>
-    <span class="lbl">${esc(b.name)}</span></a>`;
+    ${body}<span class="lbl">${esc(b.name)}</span>${b.badge ? `<span class="badge">${esc(b.badge)}</span>` : ''}</a>`;
 }
 
 function noteTile(b, size = 'm') {
