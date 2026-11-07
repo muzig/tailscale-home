@@ -169,6 +169,43 @@
   .groups { display: flex; flex-direction: column; gap: var(--g); margin-top: 12px; }
   .grid { --c: var(--accent) !important; }
   .note { grid-column: 1 / -1; grid-row: span 3; }
+  .group-hd { display: flex; align-items: baseline; justify-content: space-between; gap: 10px;
+              padding: 6px 2px 6px; border-top: 1px solid oklch(1 0 0 / 0.18); }
+  .group-hd h2 { margin: 0; font: 600 13px/1.2 var(--font); letter-spacing: .04em; color: var(--fg);
+                 display: inline-flex; align-items: center; gap: 7px; }
+  .group-hd h2::before { content: ""; width: 8px; height: 8px; background: var(--c, var(--accent)); flex: none; }
+  .group-hd span { font-size: 12px; color: var(--fg-2); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+  /* Content library: four-unit category grids share the existing Metro tiles. */
+  .library-shell { max-width: 1120px; }
+  .library-heading { display: flex; align-items: baseline; justify-content: space-between; gap: 16px; margin: 26px 0 18px; }
+  .library-heading h1 { margin: 0; font: 300 34px/1.2 var(--font); }
+  .library-heading p { margin: 6px 0 0; color: var(--fg-2); font-size: 13px; }
+  .library-heading a { color: var(--fg-2); font-size: 13px; white-space: nowrap; }
+  .library-heading a:hover { color: var(--fg); }
+  .library-categories { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); align-items: start; gap: 22px; }
+  .category-box { min-width: 0; padding: 14px; background: #111; border: 1px solid #252525; container-type: inline-size; }
+  .category-box .group-hd { border: 0; padding: 0 0 12px; }
+  .category-box .group-hd h2 { font-size: 16px; font-weight: 400; letter-spacing: 0; }
+  .category-box .grid { --cols: 4; --u: calc((100cqw - 3 * var(--g)) / 4); grid-auto-flow: row; }
+  .category-box .tile.s .lbl { font-size: 11px; }
+  .quick-access { margin-bottom: 22px; }
+  .quick-access .grid { display: flex; flex-wrap: wrap; }
+  .quick-access .tile { width: 104px; height: 104px; flex: none; --u: 104px; }
+  .quick-access .group-hd { border: 0; padding: 0 0 10px; }
+  .network-strip { margin-top: 28px; border-top: 1px solid #333; padding-top: 14px; }
+  .network-strip summary { cursor: pointer; color: var(--fg-2); font-size: 13px; }
+  .network-strip summary strong { color: var(--fg); font-weight: 400; margin-right: 12px; }
+  .network-strip .grid { margin-top: 14px; }
+  @media (max-width: 640px) {
+    .library-categories { grid-template-columns: minmax(0, 1fr); gap: 18px; }
+    .library-heading { margin-top: 20px; }
+    .library-heading h1 { font-size: 28px; }
+    .quick-access .grid { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); grid-auto-rows: auto; }
+    .quick-access .tile { width: auto; height: auto; aspect-ratio: 1; grid-column: span 1; grid-row: span 1; }
+  }
+  body[data-layout="phone"] .library-categories, body[data-layout="duo"] .library-categories { grid-template-columns: minmax(0, 1fr); }
+  body[data-layout="phone"] .quick-access .tile, body[data-layout="duo"] .quick-access .tile { width: 80px; height: 80px; }
+
   /* 转门动画：磁贴绕屏幕左缘翻入，origin 由脚本按位置设置 */
   .tile.turn { animation: turnstile .55s var(--metro) backwards; }
   @keyframes turnstile { from { opacity: 0; transform: perspective(900px) rotateY(-80deg); } }
@@ -321,6 +358,9 @@ const $ = id => document.getElementById(id);
 // ── 界面文案：?lang= > 设置里的选择（存在本浏览器）> data.json 的 lang > 英文 ──
 const I18N = {
   en: {
+    library: 'Your apps', librarySub: 'Everything together, organized by purpose', quickAccess: 'Quick access',
+    classicView: 'Tile view', network: 'Devices & network', libraryCount: n => `${n} apps & links`,
+    categories: { develop: 'AI & development', learn: 'Learning & knowledge', create: 'Creating & writing', life: 'Life & media', finance: 'Money & assets', system: 'Systems & operations', other: 'Other' },
     offline: 'Offline', unreachable: 'Unreachable', online: 'Online',
     collapse: 'Hide', justNow: 'just now', min: m => `${m} min ago`, hr: h => `${h} h ago`, day: d => `${d} d ago`,
     lastSeen: t => `, last seen ${t}`, onlineOf: n => `/ ${n} online`, scanned: t => `Scanned ${t}`,
@@ -345,6 +385,9 @@ const I18N = {
     dNoTile: 'no tile data', dProbe: 'with port probing',
   },
   zh: {
+    library: '应用与服务', librarySub: '按用途归类，常用入口集中在一起', quickAccess: '快捷访问',
+    classicView: '原磁贴视图', network: '设备与网络', libraryCount: n => `${n} 个应用与链接`,
+    categories: { develop: 'AI 与开发', learn: '学习与知识', create: '创作与表达', life: '生活与媒体', finance: '财务与资产', system: '系统与运维', other: '其他' },
     offline: '离线', unreachable: '不可达', online: '在线',
     collapse: '收起', justNow: '刚刚', min: m => `${m} 分钟前`, hr: h => `${h} 小时前`, day: d => `${d} 天前`,
     lastSeen: t => `，最后出现于 ${t}`, onlineOf: n => `/ ${n} 台在线`, scanned: t => `扫描于 ${t}`,
@@ -745,6 +788,7 @@ function deviceTiles() {
 // 首字母磁贴：跳过开头的标点和符号，如「《住宅项目规范》」取「住」
 const initial = name => ([...name.trim()].find(c => /[\p{L}\p{N}]/u.test(c)) || '?').toUpperCase();
 const selCls = i => state.engaged && i === state.sel ? ' sel' : '';
+const colorStyle = c => c && [...PALETTE, 'steel'].includes(c) ? ` style="--c:var(--${c})"` : '';
 
 function markTile(b, size = 's') {
   // 网站图标常带不透明底色，转成剪影会变成白方块，所以统一用细体首字母
@@ -782,8 +826,66 @@ function pinnedTiles(pins, list) {
   }).join('');
 }
 
+// A category can be set explicitly on a service/bookmark/app. Names provide a
+// fallback for older data; unrecognized entries remain visible under Other.
+const CONTENT_CATEGORIES = [
+  ['develop', 'cobalt', /gitea|gitlab|forgejo|gist|ollama|open webui|nvidia|nim\b|kimi|zenmux|minimax|mimo|nemoclaw|agents?|百炼|方舟|开发|代码|\bai\b|cloud console/i],
+  ['learn', 'teal', /word atlas|lexicon|qwerty|learner|courses?|coding|wiki|documentation|学习|知识|词光|小林|阅读/i],
+  ['create', 'magenta', /content studio|resume|creator|writing|创作|简历|写作/i],
+  ['life', 'emerald', /immich|cloudreve|jellyfin|plex|teslamate|home assistant|photo|media|entertainment|影音|电影|相册|生活|住宅/i],
+  ['finance', 'orange', /ledger|crypto|finance|fund|账本|资产|财经|基金|同花顺/i],
+  ['system', 'steel', /grafana|prometheus|panel|minio|monitor|uptime|pi-hole|tailscale|portainer|monitoring|运维|监控|存储/i],
+];
+function contentCategory(item) {
+  const keys = [...CONTENT_CATEGORIES.map(([key]) => key), 'other'];
+  if (keys.includes(item.category)) return item.category;
+  // A specific application name takes precedence over broad legacy tags.
+  for (const text of [item.name, [item.group, ...(item.tags || [])].filter(Boolean).join(' ')]) {
+    const match = CONTENT_CATEGORIES.find(([, , rule]) => rule.test(text || ''));
+    if (match) return match[0];
+  }
+  return 'other';
+}
+function contentEntries(list) {
+  return [
+    ...list.map(item => ({ kind: 'service', item })),
+    ...(state.data.apps || []).map(item => ({ kind: 'app', item })),
+    ...(state.data.bookmarks || []).map(item => ({ kind: item.kind === 'note' ? 'note' : 'bookmark', item })),
+  ];
+}
+function contentTile(entry, size) {
+  return entry.kind === 'service' ? svcTile(entry.item, size)
+    : entry.kind === 'app' ? appTile(entry.item, size)
+    : entry.kind === 'note' ? noteTile(entry.item, size) : markTile(entry.item, size);
+}
+function librarySections(list, networkOpen) {
+  const entries = contentEntries(list);
+  const groups = new Map();
+  for (const entry of entries) {
+    const key = contentCategory(entry.item);
+    if (!groups.has(key)) groups.set(key, []);
+    groups.get(key).push(entry);
+  }
+  const quick = [...entries].filter(e => e.item.url).sort((a, b) =>
+    (usage[b.item.url] || 0) - (usage[a.item.url] || 0)).filter((e, i, all) =>
+      all.findIndex(x => x.item.url === e.item.url) === i).slice(0, 4);
+  const classic = new URL(location.href); classic.searchParams.set('view', 'classic');
+  let html = `<header class="library-heading"><div><h1>${T.library}</h1><p>${T.librarySub}</p></div><a href="${esc(classic.pathname + classic.search)}">${T.classicView} ↗</a></header>`;
+  if (quick.length) html += `<section class="quick-access" aria-label="${T.quickAccess}"><header class="group-hd"><h2>${T.quickAccess}</h2></header><div class="grid">${quick.map(e => contentTile(e, 's')).join('')}</div></section>`;
+  html += '<div class="library-categories">';
+  for (const [key, color] of [...CONTENT_CATEGORIES, ['other', 'steel']]) {
+    const items = groups.get(key);
+    if (!items) continue;
+    html += `<section class="category-box" data-category="${key}"${colorStyle(color)} aria-label="${T.categories[key]}"><header class="group-hd"><h2>${T.categories[key]}</h2><span>${T.libraryCount(items.length)}</span></header><div class="grid">${items.map((e, i) => contentTile(e, e.item.live?.length ? 'w' : i === 0 ? 'm' : 's')).join('')}</div></section>`;
+  }
+  const online = state.data.devices.filter(d => d.online).length;
+  html += `</div><details class="network-strip"${networkOpen ? ' open' : ''}><summary><strong>${T.network}</strong>${online} ${T.onlineOf(state.data.devices.length)}</summary><div class="grid">${overviewTile()}${deviceTiles()}</div></details>`;
+  return html;
+}
+
 function render() {
   const main = $('main');
+  const networkOpen = !!main.querySelector('.network-strip[open]');
   main.removeAttribute('aria-busy');
   n = 0;
   const list = services();
@@ -797,9 +899,13 @@ function render() {
   const host = notes.length && groups.find(([name]) => name === notes[0].group);
   const pins = !state.device && Array.isArray(state.data.start) ? state.data.start : null;
 
-  // 和 WP 开始屏幕一样没有分组标题：设备一块网格，其余磁贴按组的顺序连成另一块
+  const view = new URLSearchParams(location.search).get('view');
+  const library = !state.device && view !== 'classic' && (!pins || view === 'library');
+  main.closest('.wrap').classList.toggle('library-shell', library);
   let rest = '';
-  if (pins) {
+  if (library) {
+    rest = librarySections(list, networkOpen);
+  } else if (pins) {
     rest = pinnedTiles(pins, list);
   } else {
     if (!state.device) rest += (state.data.apps || []).map(a => appTile(a)).join('');
@@ -811,7 +917,7 @@ function render() {
     });
     marks.forEach(([, items]) => { rest += items.map(b => markTile(b)).join(''); });
   }
-  main.innerHTML = `<section class="group"><div class="grid">${overviewTile()}${deviceTiles()}</div></section>`
+  main.innerHTML = library ? rest : `<section class="group"><div class="grid">${overviewTile()}${deviceTiles()}</div></section>`
     + (rest ? `<section class="group"><div class="grid">${rest}</div></section>` : '');
   state.sel = Math.min(state.sel, Math.max(n - 1, 0));
   if (state.animate) turnstile(main);
