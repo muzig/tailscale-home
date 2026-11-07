@@ -43,14 +43,14 @@ function assertAllEntries() {
   assert.equal([...el('apps-list').innerHTML.matchAll(/data-app=/g)].length, count, 'all apps remain reachable');
 }
 assertAllEntries();
-assert(el('apps-list').innerHTML.includes('<h3>基础设施</h3>'));
+assert(el('apps-list').innerHTML.includes('<h3>系统</h3>'));
 assert.equal(run("purposeOf({name:'Anthropic Courses',group:'AI Tools'})"), 'learn', 'specific purpose beats broad group');
 assert.equal(run("purposeOf({name:'Unknown'})"), 'other');
 assert.equal(run("purposeOf({name:'Category example',category:'assets'})"), 'assets');
 handlers.click({ target: { closest(selector) { return selector === '[data-app-order]' ? { dataset: { appOrder: 'name' } } : null; } } });
 assert.equal(run('state.appsOrder'), 'name');
 assertAllEntries();
-assert(!el('apps-list').innerHTML.includes('<h3>基础设施</h3>'));
+assert(!el('apps-list').innerHTML.includes('<h3>系统</h3>'));
 run('render()');
 assert.equal(el('main').innerHTML, home, 'list ordering never changes the Start tiles');
 handlers.click({ target: { closest(selector) { return selector === '[data-app-order]' ? { dataset: { appOrder: 'purpose' } } : null; } } });
@@ -71,7 +71,7 @@ assertAllEntries();
 assert(!el('apps-list').innerHTML.includes('<details'), 'name view shows every entry directly');
 run("state.appsOrder='purpose';state.data.navigation={};renderApps();");
 run("applyLang('en');renderApps()");
-assert(el('apps-list').innerHTML.includes('<h3>Infrastructure</h3>'));
+assert(el('apps-list').innerHTML.includes('<h3>System</h3>'));
 assert(el('apps-order').innerHTML.includes('purpose'));
 run('state.device=state.data.devices[0].name;render();');
 assert(!el('main').innerHTML.includes('capability-grid'), 'device filtering retains its service view');

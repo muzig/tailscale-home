@@ -8,13 +8,13 @@
 
 | `category` | 类型 |
 |---|---|
-| `overview` | Jarvis · 总览 |
-| `learn` | 学习与成长 |
-| `work` | 工作与工程 |
-| `assets` | 资产与决策 |
-| `create` | 创作与表达 |
-| `life` | 生活与保障 |
-| `infra` | 基础设施 |
+| `overview` | 总览 |
+| `learn` | 学习 |
+| `work` | 工作 |
+| `assets` | 资产 |
+| `create` | 创作 |
+| `life` | 生活 |
+| `infra` | 系统 |
 | `other` | 其他 |
 
 ## 字段
