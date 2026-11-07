@@ -40,7 +40,7 @@ assertAllEntries();
 assert(el('apps-list').innerHTML.includes('<h3>基础设施</h3>'));
 assert.equal(run("purposeOf({name:'Anthropic Courses',group:'AI Tools'})"), 'learn', 'specific purpose beats broad group');
 assert.equal(run("purposeOf({name:'Unknown'})"), 'other');
-assert.equal(run("purposeOf({name:'Gitea',category:'assets'})"), 'assets');
+assert.equal(run("purposeOf({name:'Category example',category:'assets'})"), 'assets');
 handlers.click({ target: { closest(selector) { return selector === '[data-app-order]' ? { dataset: { appOrder: 'name' } } : null; } } });
 assert.equal(run('state.appsOrder'), 'name');
 assertAllEntries();
