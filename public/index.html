@@ -175,19 +175,26 @@
                  display: inline-flex; align-items: center; gap: 7px; }
   .group-hd h2::before { content: ""; width: 8px; height: 8px; background: var(--c, var(--accent)); flex: none; }
   .group-hd span { font-size: 12px; color: var(--fg-2); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
-  /* Classification stays part of the Start screen, without card containers. */
-  .library-heading { display: flex; align-items: baseline; justify-content: space-between; gap: 16px; margin: 22px 0 26px; }
-  .library-heading h1 { margin: 0; font: 300 48px/1.1 var(--font); letter-spacing: -.035em; }
-  .library-heading a { color: var(--fg-2); font-size: 12px; white-space: nowrap; }
-  .library-heading a:hover { color: var(--fg); }
-  .library-categories { display: flex; flex-direction: column; gap: 26px; --c: var(--accent); }
-  .tile-group .group-hd { border: 0; padding: 0 0 9px; }
-  .tile-group .group-hd h2 { color: var(--fg-2); font-size: 14px; font-weight: 400; letter-spacing: 0; }
-  .tile-group .group-hd h2::before { display: none; }
-  .network-strip { margin-top: 28px; padding-top: 14px; }
+  /* Folders use the same two-unit tile size as an application. */
+  .folder-grid { display: grid; grid-template-columns: repeat(var(--cols), var(--u)); gap: var(--g); margin-top: 14px; }
+  .folder-tile { grid-column: span 2; height: calc(2 * var(--u) + var(--g)); text-align: left; }
+  .folder-tile[aria-expanded="true"] { box-shadow: inset 0 -4px 0 var(--fg); }
+  .folder-preview { position: absolute; inset: 15px 18px 37px; display: grid; grid-template-columns: repeat(2, 1fr); grid-template-rows: repeat(2, 1fr); gap: 10px; }
+  .folder-preview > span { display: grid; place-items: center; min-width: 0; min-height: 0; }
+  .folder-preview svg, .folder-preview img { width: 30px; height: 30px; object-fit: contain; }
+  .folder-preview svg { fill: none; stroke: currentColor; stroke-width: 1.6; stroke-linecap: round; stroke-linejoin: round; }
+  .folder-preview .ch { font: 300 27px/1 var(--font); }
+  .folder-panel { grid-column: 1 / -1; min-width: 0; padding: 10px 0 16px; animation: folder-open .2s var(--metro); }
+  .folder-panel-head { display: flex; align-items: center; justify-content: space-between; gap: 12px; padding: 0 0 12px; }
+  .folder-panel-head h2 { margin: 0; font: 300 22px/1.2 var(--font); }
+  .folder-close { padding: 8px 4px 8px 16px; color: var(--fg-2); font-size: 13px; }
+  .folder-tools { margin-top: 18px; text-align: right; font-size: 12px; color: var(--fg-2); }
+  .network-strip { margin-top: 24px; padding-top: 12px; }
   .network-strip summary { cursor: pointer; color: var(--fg-2); font-size: 13px; }
   .network-strip summary strong { color: var(--fg); font-weight: 400; margin-right: 12px; }
   .network-strip .grid { margin-top: 14px; }
+  @keyframes folder-open { from { opacity: 0; transform: translateY(-8px); } }
+  @media (prefers-reduced-motion: reduce) { .folder-panel { animation: none; } }
 
   /* 转门动画：磁贴绕屏幕左缘翻入，origin 由脚本按位置设置 */
   .tile.turn { animation: turnstile .55s var(--metro) backwards; }
@@ -341,7 +348,7 @@ const $ = id => document.getElementById(id);
 // ── 界面文案：?lang= > 设置里的选择（存在本浏览器）> data.json 的 lang > 英文 ──
 const I18N = {
   en: {
-    library: 'start',
+    closeFolder: 'Close folder',
     classicView: 'Tile view', network: 'Devices & network',
     categories: { develop: 'AI & development', learn: 'Learning & knowledge', create: 'Creating & writing', life: 'Life & media', finance: 'Money & assets', system: 'Systems & operations', other: 'Other' },
     offline: 'Offline', unreachable: 'Unreachable', online: 'Online',
@@ -368,7 +375,7 @@ const I18N = {
     dNoTile: 'no tile data', dProbe: 'with port probing',
   },
   zh: {
-    library: '开始',
+    closeFolder: '收起文件夹',
     classicView: '原磁贴视图', network: '设备与网络',
     categories: { develop: 'AI 与开发', learn: '学习与知识', create: '创作与表达', life: '生活与媒体', finance: '财务与资产', system: '系统与运维', other: '其他' },
     offline: '离线', unreachable: '不可达', online: '在线',
@@ -440,7 +447,7 @@ function chooseDevice(name) {
   if (url.searchParams.has('device')) { url.searchParams.delete('device'); history.replaceState(history.state, '', url); }
   setDevice(name);
   closeViewer();
-  if (state.data) turnstile($('main'));
+  if (state.data) refresh();
   if ($('settings').classList.contains('open')) renderSettings();
 }
 $('device').addEventListener('change', e => chooseDevice(e.target.value));
@@ -560,7 +567,7 @@ if (history.state?.settings || history.state?.section) {
 }
 const OTHER = '\0other';   // 未打标签的服务排在最后
 // engaged：用户按过方向键之后才显示选中框
-const state = { data: null, device: null, sel: 0, animate: true, engaged: false, showOffline: false, section: null };
+const state = { data: null, device: null, sel: 0, animate: true, engaged: false, showOffline: false, section: null, openFolder: null };
 const usage = (() => { try { return JSON.parse(localStorage.getItem('tsh-usage') || '{}'); } catch { return {}; } })();
 const PALETTE = ['cobalt', 'emerald', 'crimson', 'teal', 'magenta', 'orange', 'indigo', 'brown', 'mauve', 'violet', 'olive'];
 
@@ -841,26 +848,57 @@ function contentTile(entry, size) {
     : entry.kind === 'app' ? appTile(entry.item, size)
     : entry.kind === 'note' ? noteTile(entry.item, size) : markTile(entry.item, size);
 }
+function folderTile(key, items) {
+  const i = n++;
+  const open = state.openFolder === key;
+  const icons = items.slice(0, 4).map(({ kind, item }) => kind === 'app' ? appIcon(item)
+    : kind === 'service' ? svg(glyphOf(item))
+    : item.glyph ? svg(item.glyph) : `<span class="ch">${esc(initial(item.name))}</span>`);
+  return `<button type="button" class="tile folder-tile${selCls(i)}" data-folder="${key}" data-nav data-i="${i}"
+    aria-expanded="${open}"${open ? ` aria-controls="folder-${key}"` : ''} aria-label="${T.categories[key]}">
+    <span class="folder-preview" aria-hidden="true">${icons.map(icon => `<span>${icon}</span>`).join('')}</span>
+    <span class="lbl">${T.categories[key]}</span><span class="badge">${items.length}</span></button>`;
+}
 function librarySections(list, networkOpen) {
-  const entries = contentEntries(list);
   const groups = new Map();
-  for (const entry of entries) {
+  for (const entry of contentEntries(list)) {
     const key = contentCategory(entry.item);
     if (!groups.has(key)) groups.set(key, []);
     groups.get(key).push(entry);
   }
-  const classic = new URL(location.href); classic.searchParams.set('view', 'classic');
-  let html = `<header class="library-heading"><h1>${T.library}</h1><a href="${esc(classic.pathname + classic.search)}">${T.classicView} ↗</a></header>`;
-  html += '<div class="library-categories">';
-  for (const [key] of [...CONTENT_CATEGORIES, ['other', 'steel']]) {
-    const items = groups.get(key);
-    if (!items) continue;
-    html += `<section class="tile-group" data-category="${key}" aria-label="${T.categories[key]}"><header class="group-hd"><h2>${T.categories[key]}</h2></header><div class="grid">${items.map(e => contentTile(e, e.item.live?.length ? 'w' : ['service', 'app', 'note'].includes(e.kind) ? 'm' : 's')).join('')}</div></section>`;
+  const keys = [...CONTENT_CATEGORIES.map(([key]) => key), 'other'].filter(key => groups.has(key));
+  const perRow = Math.max(1, Math.floor(Number(getComputedStyle($('main')).getPropertyValue('--cols')) / 2) || 3);
+  let html = '<div class="folder-grid">';
+  for (let row = 0; row < keys.length; row += perRow) {
+    const rowKeys = keys.slice(row, row + perRow);
+    html += rowKeys.map(key => folderTile(key, groups.get(key))).join('');
+    if (rowKeys.includes(state.openFolder)) {
+      const key = state.openFolder;
+      html += `<section class="folder-panel" id="folder-${key}" aria-label="${T.categories[key]}">
+        <header class="folder-panel-head"><h2>${T.categories[key]}</h2><button type="button" class="folder-close" data-folder="${key}">${T.closeFolder} ↑</button></header>
+        <div class="grid">${groups.get(key).map(e => contentTile(e, e.item.live?.length ? 'w' : ['service', 'app', 'note'].includes(e.kind) ? 'm' : 's')).join('')}</div></section>`;
+    }
   }
+  const classic = new URL(location.href); classic.searchParams.set('view', 'classic');
+  html += `</div><div class="folder-tools"><a href="${esc(classic.pathname + classic.search)}">${T.classicView} ↗</a></div>`;
   const online = state.data.devices.filter(d => d.online).length;
-  html += `</div><details class="network-strip"${networkOpen ? ' open' : ''}><summary><strong>${T.network}</strong>${online} ${T.onlineOf(state.data.devices.length)}</summary><div class="grid">${overviewTile()}${deviceTiles()}</div></details>`;
+  html += `<details class="network-strip"${networkOpen ? ' open' : ''}><summary><strong>${T.network}</strong>${online} ${T.onlineOf(state.data.devices.length)}</summary><div class="grid">${overviewTile()}${deviceTiles()}</div></details>`;
   return html;
 }
+function toggleFolder(key) {
+  state.openFolder = state.openFolder === key ? null : key;
+  state.engaged = false;
+  refresh();
+  const tile = $('main').querySelector(`[data-folder="${key}"]`);
+  tile?.focus({ preventScroll: true });
+  if (state.openFolder) tile?.scrollIntoView({ block: 'nearest', behavior: 'auto' });
+}
+// Reflow expanded content after its folder's row at every screen size.
+let folderResize;
+addEventListener('resize', () => {
+  clearTimeout(folderResize);
+  folderResize = setTimeout(() => { if (state.data && state.openFolder) refresh(); }, 100);
+});
 
 function render() {
   const main = $('main');
@@ -1082,10 +1120,13 @@ function select(i) {
   state.engaged = true;
   state.sel = Math.max(0, Math.min(items.length - 1, i));
   items.forEach((el, j) => el.classList.toggle('sel', j === state.sel));
+  items[state.sel].focus({ preventScroll: true });
   items[state.sel].scrollIntoView({ block: 'nearest', inline: 'nearest' });
 }
 
 document.addEventListener('click', e => {
+  const folder = e.target.closest('[data-folder]');
+  if (folder) { e.preventDefault(); toggleFolder(folder.dataset.folder); return; }
   if (e.target.closest('#to-settings')) { openSettings(true); return; }
   if (e.target.closest('#set-back')) {
     if (state.section) history.back();
@@ -1126,12 +1167,17 @@ document.addEventListener('keydown', e => {
   }
   if (e.key === 'Escape' && $('viewer').classList.contains('open')) { closeViewer(); return; }
   if (e.key === 'Escape' && $('apps').classList.contains('open')) { openApps(false); return; }
+  if (e.key === 'Escape' && state.openFolder && !state.device) { e.preventDefault(); toggleFolder(state.openFolder); return; }
   if (e.key === 'Escape') { state.device = null; state.sel = 0; refresh(); return; }
   const move = { ArrowDown: 1, ArrowUp: -1, ArrowRight: 1, ArrowLeft: -1 }[e.key];
   if (move) { e.preventDefault(); select(state.sel + move); return; }
   if (e.key === 'Enter' && document.activeElement === document.body) {
     const items = document.querySelectorAll('[data-nav]');
-    if (items[state.sel]) { e.preventDefault(); go(items[state.sel].dataset.url, e.metaKey || e.ctrlKey); }
+    if (items[state.sel]) {
+      e.preventDefault();
+      if (items[state.sel].dataset.folder) toggleFolder(items[state.sel].dataset.folder);
+      else go(items[state.sel].dataset.url, e.metaKey || e.ctrlKey);
+    }
   }
 });
 
