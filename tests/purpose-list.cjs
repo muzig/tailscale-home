@@ -28,10 +28,16 @@ ctx.inputData = JSON.parse(fs.readFileSync(path.join(root, 'demo/data.json'), 'u
 ctx.pins = [...ctx.inputData.services.slice(0, 2).map(s => ({ name: s.name, size: 'm' })),
   { name: ctx.inputData.apps[0].id, size: 'w' }];
 const run = code => vm.runInContext(code, ctx);
-run('state.data={...inputData,start:pins};state.animate=false;render();');
+run('state.data={...inputData,start:pins,start_grouped:true};state.animate=false;render();');
 const home = el('main').innerHTML;
 assert.equal([...home.matchAll(/data-nav/g)].length, 3, 'home shows only selected app tiles');
 assert(!/<h1>|folder-grid|library-categories/.test(home), 'no new home title or classification container');
+assert(home.includes('class="capability-name"'), 'capability titles are visible on the home screen');
+const nav = [...home.matchAll(/data-i="(\d+)"/g)].map(match => Number(match[1]));
+assert.deepEqual(nav, nav.map((_, index) => index), 'grouped home navigation stays contiguous');
+run('state.data.start_grouped=false;render();');
+assert(!el('main').innerHTML.includes('capability-grid'), 'ungrouped view stays available');
+run('state.data.start_grouped=true;render();');
 const count = ctx.inputData.services.length + (ctx.inputData.bookmarks || []).length + ctx.inputData.apps.filter(a => a.url).length;
 function assertAllEntries() {
   assert.equal([...el('apps-list').innerHTML.matchAll(/data-app=/g)].length, count, 'all apps remain reachable');
@@ -67,4 +73,6 @@ run("state.appsOrder='purpose';state.data.navigation={};renderApps();");
 run("applyLang('en');renderApps()");
 assert(el('apps-list').innerHTML.includes('<h3>Infrastructure</h3>'));
 assert(el('apps-order').innerHTML.includes('purpose'));
+run('state.device=state.data.devices[0].name;render();');
+assert(!el('main').innerHTML.includes('capability-grid'), 'device filtering retains its service view');
 console.log(`Passed: ${count} complete-list entries, purpose/name switching, fixed home, explicit category, fallback and English. DOM execution; visual verification is separate.`);
