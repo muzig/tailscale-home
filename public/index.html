@@ -157,6 +157,8 @@
   .apps a .ch { font: 300 26px/1 var(--font); color: #fff; }
   .apps a small { display: block; font-size: 12px; color: var(--fg-2); }
 
+  .apps details summary { padding: 12px 0 8px; color: var(--fg-2); font-size: 15px; cursor: pointer; }
+  .apps details[open] { padding-bottom: 8px; }
   .apps-order { display: flex; gap: 24px; padding: 12px 0 4px; }
   .apps-order button { color: var(--fg-2); font: 300 28px/1.2 var(--font); padding: 4px 0; }
   .apps-order button[aria-pressed="true"] { color: var(--fg); }
@@ -338,7 +340,8 @@ const I18N = {
     loadFail: '<strong>Can’t load the service list</strong>data.json failed to load: the scan may not have run yet, or the network is down.',
     retry: 'Reload', demo: 'Demo · fake tailnet',
     byPurpose: 'purpose', byName: 'name',
-    purposeNames: { develop: 'AI & development', learn: 'Learning & knowledge', create: 'Creating & writing', life: 'Life & media', finance: 'Money & assets', system: 'Systems & operations', other: 'Other' },
+    moreTools: n => `Supporting entries (${n})`,
+    purposeNames: { overview: 'Jarvis · overview', learn: 'Learning & growth', work: 'Work & engineering', assets: 'Assets & decisions', create: 'Creating & expression', life: 'Life & protection', infra: 'Infrastructure', other: 'Other' },
     allApps: 'All services', backToStart: 'Back to Start', device: 'Show as', devices_: { auto: 'Auto', phone: 'Phone', duo: 'Dual screen' },
     openTab: 'Open in a new tab', noFrame: 'This service doesn’t allow being shown inside another page.',
     mixed: 'This http service can’t be shown inside an https page. Open the home page at its http address to see it here.',
@@ -364,7 +367,8 @@ const I18N = {
     loadFail: '<strong>暂时读不到服务列表</strong>data.json 加载失败：可能是扫描任务还没跑过，或网络中断。',
     retry: '重新加载', demo: '演示 · 虚构数据',
     byPurpose: '用途', byName: '名称',
-    purposeNames: { develop: 'AI 与开发', learn: '学习与知识', create: '创作与表达', life: '生活与媒体', finance: '财务与资产', system: '系统与运维', other: '其他' },
+    moreTools: n => `辅助入口（${n}）`,
+    purposeNames: { overview: 'Jarvis · 总览', learn: '学习与成长', work: '工作与工程', assets: '资产与决策', create: '创作与表达', life: '生活与保障', infra: '基础设施', other: '其他' },
     allApps: '全部服务', backToStart: '返回开始屏幕', device: '显示为', devices_: { auto: '自动', phone: '手机', duo: '双屏' },
     openTab: '在新标签页打开', noFrame: '这个服务不允许在别的页面里显示。',
     mixed: '这是 http 服务，https 页面里无法显示。用主页的 http 地址打开就能在这里看到。',
@@ -845,15 +849,20 @@ function turnstile(root) {
 
 // Purpose affects only the complete list; the Start tiles stay explicitly pinned.
 const PURPOSE_RULES = [
-  ['develop', /gitea|gitlab|forgejo|gist|ollama|open webui|nvidia|nim\b|kimi|zenmux|minimax|mimo|nemoclaw|deepseek|agents?|百炼|方舟|开发|代码|\bai\b|\bdev\b|cloud services|cloud console/i],
-  ['learn', /word atlas|lexicon|qwerty|learner|courses?|coding|wiki|documentation|learning|学习|知识|词光|小林|阅读/i],
+  ['overview', /^jarvis$/i],
+  ['learn', /word atlas|lexicon|qwerty|learner|courses?|coding|wiki|documentation|learning|deepseek.*harness|advent of agents|学习|知识|词光|小林|阅读/i],
+  ['work', /monitor|\bdev\b|工作|工程|代码|活动|投放/i],
+  ['assets', /ledger|crypto|finance|fund|账本|资产|财经|基金|同花顺/i],
   ['create', /content studio|resume|creator|creative|writing|创作|简历|写作/i],
   ['life', /immich|cloudreve|jellyfin|plex|teslamate|mobility|home assistant|photo|media|entertainment|影音|电影|相册|生活|住宅/i],
-  ['finance', /ledger|crypto|finance|fund|账本|资产|财经|基金|同花顺/i],
-  ['system', /grafana|prometheus|panel|minio|monitor|uptime|pi-hole|tailscale|tailnet|portainer|monitoring|storage|运维|监控|存储/i],
+  ['infra', /gitea|gitlab|forgejo|gist|ollama|open webui|nvidia|nim\b|kimi|zenmux|minimax|mimo|nemoclaw|agents?|百炼|方舟|\bai\b|cloud|grafana|prometheus|panel|minio|uptime|pi-hole|tailscale|tailnet|portainer|storage|运维|监控|存储/i],
 ];
+function navigationOf(item) {
+  return state.data?.navigation?.[item.id] || state.data?.navigation?.[item.name] || {};
+}
 function purposeOf(item) {
-  if (item.category && Object.hasOwn(T.purposeNames, item.category)) return item.category;
+  const category = navigationOf(item).category || item.category;
+  if (category && Object.hasOwn(T.purposeNames, category)) return category;
   for (const text of [item.name, [item.group, ...(item.tags || [])].filter(Boolean).join(' ')]) {
     const match = PURPOSE_RULES.find(([, rule]) => rule.test(text || ''));
     if (match) return match[0];
@@ -863,9 +872,9 @@ function purposeOf(item) {
 function renderApps() {
   const { data } = state;
   const items = [
-    ...data.services.map(s => ({ name: s.name, url: resolveUrl(s, data.devices), sub: s.device, icon: svg(glyphOf(s)), purpose: purposeOf(s) })),
-    ...(data.bookmarks || []).map(b => ({ name: b.name, url: b.url, sub: b.note || '', icon: b.glyph ? svg(b.glyph) : `<span class="ch">${esc(initial(b.name))}</span>`, purpose: purposeOf(b) })),
-    ...(data.apps || []).filter(a => a.url).map(a => ({ name: appName(a), url: a.url, sub: a.description || '', icon: appIcon(a), purpose: purposeOf(a) })),
+    ...data.services.map(s => ({ name: s.name, url: resolveUrl(s, data.devices), sub: s.device, icon: svg(glyphOf(s)), purpose: purposeOf(s), primary: navigationOf(s).primary !== false })),
+    ...(data.bookmarks || []).map(b => ({ name: b.name, url: b.url, sub: b.note || '', icon: b.glyph ? svg(b.glyph) : `<span class="ch">${esc(initial(b.name))}</span>`, purpose: purposeOf(b), primary: navigationOf(b).primary !== false })),
+    ...(data.apps || []).filter(a => a.url).map(a => ({ name: appName(a), url: a.url, sub: a.description || '', icon: appIcon(a), purpose: purposeOf(a), primary: navigationOf(a).primary !== false })),
   ];
   const purpose = state.appsOrder === 'purpose';
   const order = [...PURPOSE_RULES.map(([key]) => key), 'other'];
@@ -873,11 +882,24 @@ function renderApps() {
     || a.name.localeCompare(b.name, undefined, { sensitivity: 'base' }));
   $('apps').classList.toggle('purpose', purpose);
   $('apps-order').innerHTML = ['purpose', 'name'].map(key => `<button type="button" data-app-order="${key}" aria-pressed="${state.appsOrder === key}">${key === 'purpose' ? T.byPurpose : T.byName}</button>`).join('');
-  let html = '', last = '';
-  for (const it of items) {
-    const key = purpose ? it.purpose : /^[a-z]/i.test(it.name) ? it.name[0].toUpperCase() : '#';
-    if (key !== last) { html += `<h3>${purpose ? T.purposeNames[key] : key}</h3>`; last = key; }
-    html += `<a href="${esc(it.url)}" data-app="${esc(it.url)}"><span>${it.icon}</span><span>${esc(it.name)}${it.sub ? `<small>${esc(it.sub)}</small>` : ''}</span></a>`;
+  const link = it => `<a href="${esc(it.url)}" data-app="${esc(it.url)}"><span>${it.icon}</span><span>${esc(it.name)}${it.sub ? `<small>${esc(it.sub)}</small>` : ''}</span></a>`;
+  const expanded = new Set([...$('apps-list').querySelectorAll('details[open]')].map(d => d.dataset.purpose));
+  let html = '';
+  if (purpose) {
+    for (const key of order) {
+      const group = items.filter(it => it.purpose === key);
+      if (!group.length) continue;
+      html += `<h3>${T.purposeNames[key]}</h3>` + group.filter(it => it.primary).map(link).join('');
+      const supporting = group.filter(it => !it.primary);
+      if (supporting.length) html += `<details data-purpose="${key}"${expanded.has(key) ? ' open' : ''}><summary>${T.moreTools(supporting.length)}</summary>${supporting.map(link).join('')}</details>`;
+    }
+  } else {
+    let last = '';
+    for (const it of items) {
+      const key = /^[a-z]/i.test(it.name) ? it.name[0].toUpperCase() : '#';
+      if (key !== last) { html += `<h3>${key}</h3>`; last = key; }
+      html += link(it);
+    }
   }
   $('apps-list').innerHTML = html;
 }

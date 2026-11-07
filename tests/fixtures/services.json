@@ -50,5 +50,6 @@
       "size": "m"
     }
   ],
+  "navigation": {"Docs": {"category": "learn", "primary": false}},
   "accent": "emerald"
 }

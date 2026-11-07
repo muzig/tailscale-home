@@ -414,6 +414,7 @@ def main():
         "services": services,
         "apps": apps(Path(args.out).resolve().parent),
         "bookmarks": notes(Path(args.out).resolve().parent, manual.get("notes_group") or "Notes", self_dev["name"]) + manual.get("bookmarks", []),
+        "navigation": manual.get("navigation") or {},
         "start": manual.get("start"),         # 手机开始屏幕固定的磁贴；不写则显示全部
         "accent": manual.get("accent", ""),   # 手机开始屏幕的主题色
         "channel": args.channel or (manual.get("channel") if manual.get("channel") in ("stable", "preview") else "stable"),
